@@ -124,11 +124,17 @@ window.EXERCISE_CATALOG = [
   { id: "el_burn", name: "Эллипс: Жиросжигающее кардио", category: "Эллипс", equip: "Эллипс", defaultDistance: 3.5, defaultPace: "06:00", targetReps: "3.5 км", restSeconds: 0, isCardio: true, tip: "Умеренный пульс 125-140 уд/мин, среднее сопротивление (уровень 6-8)" },
   { id: "el_hiit", name: "Эллипс: Интервалы высокой мощности (HIIT)", category: "Эллипс", equip: "Эллипс", defaultDistance: 0.5, defaultPace: "04:30", targetReps: "500 м", restSeconds: 90, isCardio: true, tip: "30-45 сек мощное ускорение на тяжелом сопротивлении, 1 мин отдых" },
   { id: "el_incline", name: "Эллипс: Длинная дистанция на выносливость", category: "Эллипс", equip: "Эллипс", defaultDistance: 5.0, defaultPace: "05:45", targetReps: "5.0 км", restSeconds: 0, isCardio: true, tip: "Стабильный каденс без остановок, глубокое дыхание" },
-  { id: "el_cooldown", name: "Эллипс: Заминка и пульсовое восстановление", category: "Эллипс", equip: "Эллипс", defaultDistance: 0.8, defaultPace: "08:00", targetReps: "800 м", restSeconds: 0, isCardio: true, tip: "Минимальная нагрузка, глубокий вдох-выдох" }
+  { id: "el_cooldown", name: "Эллипс: Заминка и пульсовое восстановление", category: "Эллипс", equip: "Эллипс", defaultDistance: 0.8, defaultPace: "08:00", targetReps: "800 м", restSeconds: 0, isCardio: true, tip: "Минимальная нагрузка, глубокий вдох-выдох" },
+  // ==================== ВЕЛОТРЕНАЖЕР ====================
+  { id: "bike_warmup", name: "Вело: Разминка перед силовой", category: "Вело", equip: "Велотренажер", defaultDistance: 2.0, defaultPace: "03:00", targetReps: "2.0 км", restSeconds: 60, isCardio: true, cardioType: "bike", tip: "Легкая нагрузка (Level 3-5), каденс 80-90 об/мин" },
+  { id: "bike_steady", name: "Вело: Ровный темп на выносливость", category: "Вело", equip: "Велотренажер", defaultDistance: 5.0, defaultPace: "02:30", targetReps: "5.0 км", restSeconds: 0, isCardio: true, cardioType: "bike", tip: "Умеренный пульс 120-135 уд/мин, средняя нагрузка (Level 6-8)" },
+  { id: "bike_intervals", name: "Вело: Спринтерские интервалы HIIT", category: "Вело", equip: "Велотренажер", defaultDistance: 1.0, defaultPace: "01:45", targetReps: "1.0 км", restSeconds: 90, isCardio: true, cardioType: "bike", tip: "30 сек спринт на высокой нагрузке (Level 10-14), 1 мин отдых" },
+  { id: "bike_hills", name: "Вело: Подъем в гору (силовое кардио)", category: "Вело", equip: "Велотренажер", defaultDistance: 3.0, defaultPace: "03:30", targetReps: "3.0 км", restSeconds: 60, isCardio: true, cardioType: "bike", tip: "Высокое сопротивление (Level 10-15), работа сидя и стоя" },
+  { id: "bike_cooldown", name: "Вело: Заминка и восстановление", category: "Вело", equip: "Велотренажер", defaultDistance: 1.0, defaultPace: "04:00", targetReps: "1.0 км", restSeconds: 0, isCardio: true, cardioType: "bike", tip: "Минимальное сопротивление (Level 1-2), спокойное дыхание" }
 ];
 
 // Категории для фильтрации "по папкам"
-window.EXERCISE_CATEGORIES = ["Все", "Грудь", "Спина", "Ноги", "Плечи", "Руки", "Пресс", "Бег", "Эллипс"];
+window.EXERCISE_CATEGORIES = ["Все", "Грудь", "Спина", "Ноги", "Плечи", "Руки", "Пресс", "Бег", "Эллипс", "Вело"];
 
 // Шаблоны тренировок: пустой список для чистого старта с нуля
 window.DEFAULT_WORKOUTS = [];

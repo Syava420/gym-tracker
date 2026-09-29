@@ -178,7 +178,7 @@ function openAddRecordModal(onSaved) {
         <label class="form-label">Выберите упражнение из базы</label>
         <select id="record-ex-select" class="form-input">
           <option value="custom">Свое упражнение (ввести вручную)</option>
-          ${catalog.map((c) => `<option value="${c.id}" data-name="${c.name}" data-cardio="${Boolean(c.isCardio || c.category === "Бег" || c.category === "Эллипс")}">${c.name} (${c.category})</option>`).join("")}
+          ${catalog.map((c) => `<option value="${c.id}" data-name="${c.name}" data-cardio="${Boolean(c.isCardio || c.category === "Бег" || c.category === "Эллипс" || c.category === "Вело")}">${c.name} (${c.category})</option>`).join("")}
         </select>
       </div>
 

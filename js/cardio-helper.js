@@ -1,10 +1,11 @@
 // cardio-helper.js
-// Модуль работы с кардио-упражнениями (беговая дорожка, эллипс, велотренажер)
+// Модуль работы с кардио-упражнениями (бег, эллипс, велотренажер)
 // Поддерживает:
-// 1. Уклон (%) для беговой дорожки
-// 2. Уровень тяжести/сопротивления (Lvl) для эллипса
-// 3. Выбор режима: «По дистанции» vs «По времени»
-// 4. Секундомер / таймер отрезка «Нажал и побежал» (⏱️)
+// 1. Оборудование: Бег (Уклон %), Эллипс (Тяжесть Lvl), Вело (Нагрузка Lvl)
+// 2. Единицы дистанции: метры (м) / километры (км) с раздельным переключением в 1 клик
+// 3. Единицы времени: секунды (сек) / минуты (мин) с раздельным переключением в 1 клик
+// 4. Режимы: «По дистанции» vs «По времени»
+// 5. Секундомер / таймер отрезка «Нажал и побежал» (сворачивание, работа в фоне)
 
 function isCardioExercise(ex) {
   if (!ex) return false;
@@ -12,10 +13,16 @@ function isCardioExercise(ex) {
     ex.isCardio ||
     ex.category === "Бег" ||
     ex.category === "Эллипс" ||
+    ex.category === "Вело" ||
+    ex.cardioType === "treadmill" ||
+    ex.cardioType === "ellipse" ||
+    ex.cardioType === "bike" ||
     (ex.name && (
       ex.name.toLowerCase().includes("бег") ||
       ex.name.toLowerCase().includes("дорожк") ||
       ex.name.toLowerCase().includes("эллипс") ||
+      ex.name.toLowerCase().includes("вело") ||
+      ex.name.toLowerCase().includes("байк") ||
       ex.name.toLowerCase().includes("интервал") ||
       ex.name.toLowerCase().includes("спринт") ||
       ex.name.toLowerCase().includes("кросс")
@@ -25,46 +32,209 @@ function isCardioExercise(ex) {
 
 function getCardioType(ex) {
   if (!ex) return "treadmill";
-  if (ex.cardioType) return ex.cardioType;
+  if (ex.cardioType && ["treadmill", "ellipse", "bike"].includes(ex.cardioType)) {
+    return ex.cardioType;
+  }
   const name = (ex.name || "").toLowerCase();
   const cat = (ex.category || "").toLowerCase();
   const equip = (ex.equip || "").toLowerCase();
-  if (cat.includes("эллипс") || name.includes("эллипс") || equip.includes("эллипс") || name.includes("вело")) {
+  if (cat.includes("вело") || name.includes("вело") || equip.includes("вело") || equip.includes("bike")) {
+    return "bike";
+  }
+  if (cat.includes("эллипс") || name.includes("эллипс") || equip.includes("эллипс")) {
     return "ellipse";
   }
   return "treadmill";
 }
 
+function getCardioParamMeta(ex) {
+  const type = getCardioType(ex);
+  if (type === "bike") {
+    return {
+      type: "bike",
+      name: "Нагрузка",
+      shortName: "НАГРУЗКА",
+      unit: "lvl",
+      prop: "bikeLevel",
+      min: 1,
+      max: 25,
+      step: 1,
+      defaultVal: 5
+    };
+  }
+  if (type === "ellipse") {
+    return {
+      type: "ellipse",
+      name: "Тяжесть",
+      shortName: "ТЯЖЕСТЬ",
+      unit: "lvl",
+      prop: "resistanceLevel",
+      min: 1,
+      max: 25,
+      step: 1,
+      defaultVal: 5
+    };
+  }
+  return {
+    type: "treadmill",
+    name: "Уклон",
+    shortName: "УКЛОН",
+    unit: "%",
+    prop: "incline",
+    min: 0,
+    max: 20,
+    step: 0.5,
+    defaultVal: 1
+  };
+}
+
+function getDistUnit(ex) {
+  if (ex.distUnit) return ex.distUnit;
+  if (ex.targetReps && ex.targetReps.includes("м") && !ex.targetReps.includes("км")) {
+    return "m";
+  }
+  return "km";
+}
+
+function getTimeUnit(ex) {
+  if (ex.timeUnit) return ex.timeUnit;
+  if (ex.targetReps && ex.targetReps.includes("сек")) {
+    return "sec";
+  }
+  return "min";
+}
+
+function toggleDistanceUnit(ex, newUnit) {
+  const current = getDistUnit(ex);
+  if (current === newUnit) return;
+  ex.distUnit = newUnit;
+
+  (ex.sets || []).forEach((s) => {
+    let d = parseFloat(s.distance);
+    if (isNaN(d)) d = ex.defaultDistance || (newUnit === "m" ? 400 : 0.4);
+    if (newUnit === "m" && current === "km") {
+      s.distance = Math.round(d * 1000);
+    } else if (newUnit === "km" && current === "m") {
+      s.distance = Math.round((d / 1000) * 100) / 100;
+    }
+  });
+}
+
+function toggleTimeUnit(ex, newUnit) {
+  const current = getTimeUnit(ex);
+  if (current === newUnit) return;
+  ex.timeUnit = newUnit;
+
+  const mode = ex.cardioMode || "distance";
+  (ex.sets || []).forEach((s) => {
+    if (mode === "time") {
+      if (newUnit === "sec") {
+        const m = s.minutes || parseInt(s.time) || 20;
+        s.seconds = m * 60;
+        s.time = `${s.seconds} сек`;
+      } else {
+        const sec = s.seconds || parseInt(s.time) || 1200;
+        s.minutes = Math.max(1, Math.round(sec / 60));
+        s.time = `${s.minutes} мин`;
+      }
+    } else {
+      if (newUnit === "sec") {
+        if (s.time && s.time.includes(":")) {
+          const parts = s.time.split(":");
+          s.time = String((parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0));
+        } else if (s.time && s.time.includes("мин")) {
+          s.time = String((parseInt(s.time, 10) || 1) * 60);
+        }
+      } else {
+        const totalSec = parseInt(s.time, 10);
+        if (!isNaN(totalSec) && totalSec > 0 && !String(s.time).includes(":")) {
+          const m = Math.floor(totalSec / 60);
+          const remSec = totalSec % 60;
+          s.time = `${m}:${remSec < 10 ? "0" : ""}${remSec}`;
+        }
+      }
+    }
+  });
+}
+
 /**
- * Рендерит плашку переключения режима (Дистанция / Время) и быстрого изменения уклона/тяжести
+ * Рендерит плашку переключения оборудования (Бег / Эллипс / Вело), режима (Дистанция / Время),
+ * единиц измерения (м / км, сек / мин) и быстрого изменения параметра тренажера
  */
 function renderCardioControls(container, ex, workout, onSaveSession, onRerender) {
-  const isEllipse = getCardioType(ex) === "ellipse";
-  const mode = ex.cardioMode || "distance"; // 'distance' | 'time'
+  const type = getCardioType(ex);
+  const mode = ex.cardioMode || "distance";
+  const distUnit = getDistUnit(ex);
+  const timeUnit = getTimeUnit(ex);
+  const meta = getCardioParamMeta(ex);
+
+  const curParamVal = ex[meta.prop] !== undefined ? ex[meta.prop] : meta.defaultVal;
 
   const bar = document.createElement("div");
   bar.className = "cardio-control-bar";
 
   bar.innerHTML = `
-    <div class="cardio-mode-toggle">
-      <button type="button" class="btn-cardio-mode ${mode === 'distance' ? 'active' : ''}" data-mode="distance">Дистанция</button>
-      <button type="button" class="btn-cardio-mode ${mode === 'time' ? 'active' : ''}" data-mode="time">По времени</button>
+    <div class="cardio-ctrl-row cardio-top-row">
+      <div class="cardio-pill-group cardio-type-pills">
+        <button type="button" class="btn-cardio-pill ${type === 'treadmill' ? 'active' : ''}" data-type="treadmill">Бег</button>
+        <button type="button" class="btn-cardio-pill ${type === 'ellipse' ? 'active' : ''}" data-type="ellipse">Эллипс</button>
+        <button type="button" class="btn-cardio-pill ${type === 'bike' ? 'active' : ''}" data-type="bike">Вело</button>
+      </div>
+      <div class="cardio-pill-group cardio-mode-pills">
+        <button type="button" class="btn-cardio-pill ${mode === 'distance' ? 'active' : ''}" data-mode="distance">Дистанция</button>
+        <button type="button" class="btn-cardio-pill ${mode === 'time' ? 'active' : ''}" data-mode="time">По времени</button>
+      </div>
     </div>
 
-    ${mode === 'distance' ? `
+    <div class="cardio-ctrl-row cardio-sub-row">
+      <div class="cardio-units-wrap">
+        ${mode === 'distance' ? `
+          <div class="cardio-unit-box">
+            <span class="cub-label">Дист:</span>
+            <div class="cardio-unit-toggle" data-kind="dist">
+              <button type="button" class="btn-cardio-u ${distUnit === 'm' ? 'active' : ''}" data-unit="m">м</button>
+              <button type="button" class="btn-cardio-u ${distUnit === 'km' ? 'active' : ''}" data-unit="km">км</button>
+            </div>
+          </div>
+        ` : ''}
+        <div class="cardio-unit-box">
+          <span class="cub-label">Время:</span>
+          <div class="cardio-unit-toggle" data-kind="time">
+            <button type="button" class="btn-cardio-u ${timeUnit === 'sec' ? 'active' : ''}" data-unit="sec">сек</button>
+            <button type="button" class="btn-cardio-u ${timeUnit === 'min' ? 'active' : ''}" data-unit="min">мин</button>
+          </div>
+        </div>
+      </div>
+
       <div class="cardio-param-box">
-        <span class="cpb-label">${isEllipse ? "Тяжесть:" : "Уклон:"}</span>
+        <span class="cpb-label">${meta.name}:</span>
         <div class="cpb-stepper">
           <button type="button" class="btn-cqp-step btn-cqp-dec" title="Уменьшить">-</button>
-          <span class="cqp-val" id="cqp-val-param">${isEllipse ? (ex.resistanceLevel !== undefined ? ex.resistanceLevel : 5) : (ex.incline !== undefined ? ex.incline : 1) + '%'}</span>
+          <span class="cqp-val" id="cqp-val-param">${curParamVal}${meta.unit === '%' ? '%' : ''}</span>
           <button type="button" class="btn-cqp-step btn-cqp-inc" title="Увеличить">+</button>
         </div>
       </div>
-    ` : ""}
+    </div>
   `;
 
-  // Переключение режимов: Дистанция vs Время
-  bar.querySelectorAll(".btn-cardio-mode").forEach((btn) => {
+  // Переключение оборудования: Бег / Эллипс / Вело
+  bar.querySelectorAll(".cardio-type-pills .btn-cardio-pill").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const newType = btn.dataset.type;
+      if (ex.cardioType !== newType) {
+        ex.cardioType = newType;
+        if (newType === "bike") ex.equip = "Велотренажер";
+        else if (newType === "ellipse") ex.equip = "Эллипс";
+        else ex.equip = "Дорожка";
+        onSaveSession();
+        onRerender();
+      }
+    });
+  });
+
+  // Переключение режима: Дистанция vs Время
+  bar.querySelectorAll(".cardio-mode-pills .btn-cardio-pill").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const targetMode = btn.dataset.mode;
@@ -79,47 +249,67 @@ function renderCardioControls(container, ex, workout, onSaveSession, onRerender)
     });
   });
 
-  // Изменение уклона или уровня тяжести (в режиме дистанции)
-  if (mode === "distance") {
-    const decBtn = bar.querySelector(".btn-cqp-dec");
-    const incBtn = bar.querySelector(".btn-cqp-inc");
-    const valSpan = bar.querySelector("#cqp-val-param");
+  // Переключение единиц дистанции (м / км)
+  const distToggle = bar.querySelector(".cardio-unit-toggle[data-kind='dist']");
+  if (distToggle) {
+    distToggle.querySelectorAll(".btn-cardio-u").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleDistanceUnit(ex, btn.dataset.unit);
+        onSaveSession();
+        onRerender();
+      });
+    });
+  }
 
-    if (decBtn && incBtn && valSpan) {
-      if (isEllipse) {
-        decBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          let current = ex.resistanceLevel !== undefined ? ex.resistanceLevel : 5;
-          ex.resistanceLevel = Math.max(1, current - 1);
-          valSpan.textContent = `${ex.resistanceLevel}`;
-          onSaveSession();
-        });
+  // Переключение единиц времени (сек / мин)
+  const timeToggle = bar.querySelector(".cardio-unit-toggle[data-kind='time']");
+  if (timeToggle) {
+    timeToggle.querySelectorAll(".btn-cardio-u").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleTimeUnit(ex, btn.dataset.unit);
+        onSaveSession();
+        onRerender();
+      });
+    });
+  }
 
-        incBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          let current = ex.resistanceLevel !== undefined ? ex.resistanceLevel : 5;
-          ex.resistanceLevel = Math.min(25, current + 1);
-          valSpan.textContent = `${ex.resistanceLevel}`;
-          onSaveSession();
-        });
-      } else {
-        decBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          let current = ex.incline !== undefined ? ex.incline : 1;
-          ex.incline = Math.max(0, Math.round((current - 0.5) * 10) / 10);
-          valSpan.textContent = `${ex.incline}%`;
-          onSaveSession();
-        });
+  // Изменение параметра тренажера
+  const decBtn = bar.querySelector(".btn-cqp-dec");
+  const incBtn = bar.querySelector(".btn-cqp-inc");
+  const valSpan = bar.querySelector("#cqp-val-param");
 
-        incBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          let current = ex.incline !== undefined ? ex.incline : 1;
-          ex.incline = Math.min(20, Math.round((current + 0.5) * 10) / 10);
-          valSpan.textContent = `${ex.incline}%`;
-          onSaveSession();
-        });
-      }
-    }
+  if (decBtn && incBtn && valSpan) {
+    decBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      let current = ex[meta.prop] !== undefined ? ex[meta.prop] : meta.defaultVal;
+      let next = meta.step < 1 ? Math.round((current - meta.step) * 10) / 10 : current - meta.step;
+      ex[meta.prop] = Math.max(meta.min, next);
+      valSpan.textContent = `${ex[meta.prop]}${meta.unit === '%' ? '%' : ''}`;
+      (ex.sets || []).forEach((s) => {
+        if (!s.completed) {
+          if (meta.prop === "incline") s.incline = ex[meta.prop];
+          else s.level = ex[meta.prop];
+        }
+      });
+      onSaveSession();
+    });
+
+    incBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      let current = ex[meta.prop] !== undefined ? ex[meta.prop] : meta.defaultVal;
+      let next = meta.step < 1 ? Math.round((current + meta.step) * 10) / 10 : current + meta.step;
+      ex[meta.prop] = Math.min(meta.max, next);
+      valSpan.textContent = `${ex[meta.prop]}${meta.unit === '%' ? '%' : ''}`;
+      (ex.sets || []).forEach((s) => {
+        if (!s.completed) {
+          if (meta.prop === "incline") s.incline = ex[meta.prop];
+          else s.level = ex[meta.prop];
+        }
+      });
+      onSaveSession();
+    });
   }
 
   container.appendChild(bar);
@@ -128,27 +318,36 @@ function renderCardioControls(container, ex, workout, onSaveSession, onRerender)
 /**
  * Рендер строки кардио-подхода (отрезка)
  * Поддерживает оба режима:
- * - По дистанции: отрезок | пред | дист (км) | время/темп + ⏱️ | ✓ | ✕
- * - По времени: отрезок | пред | время (мин) + ⏱️ | уклон % или Lvl тяжесть | ✓ | ✕
+ * - По дистанции: отрезок | пред | дист (м/км) | время (сек/мин) + ⏱️ | ✓ | ✕
+ * - По времени: отрезок | пред | время (сек/мин) + ⏱️ | параметр тренажера | ✓ | ✕
  */
 function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTriggerRest, onRerender, onStartTimer, sessionStartTime) {
-  const isEllipse = getCardioType(ex) === "ellipse";
   const mode = ex.cardioMode || "distance";
+  const distUnit = getDistUnit(ex);
+  const timeUnit = getTimeUnit(ex);
+  const meta = getCardioParamMeta(ex);
 
-  // SVG-иконка секундомера
   const stopwatchIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M10 2h4"/></svg>`;
 
   if (mode === "time") {
-    // РЕЖИМ 2: ПО ВРЕМЕНИ
-    let mins = set.minutes;
-    if (!mins) {
-      const parsed = parseInt(set.time);
-      mins = (!isNaN(parsed) && parsed > 0) ? parsed : (ex.targetMinutes || 20);
-      set.minutes = mins;
+    // ================= РЕЖИМ 2: ПО ВРЕМЕНИ =================
+    let timeVal = 0;
+    if (timeUnit === "sec") {
+      timeVal = set.seconds || (set.minutes ? set.minutes * 60 : 1200);
+      set.seconds = timeVal;
+    } else {
+      let mins = set.minutes;
+      if (!mins) {
+        const parsed = parseInt(set.time, 10);
+        mins = (!isNaN(parsed) && parsed > 0) ? parsed : (ex.targetMinutes || 20);
+        set.minutes = mins;
+      }
+      timeVal = set.minutes;
     }
-    const paramVal = isEllipse 
-      ? (set.level != null ? set.level : (ex.resistanceLevel || 5))
-      : (set.incline != null ? set.incline : (ex.incline || 1));
+
+    const paramVal = meta.prop === "incline"
+      ? (set.incline != null ? set.incline : (ex.incline != null ? ex.incline : 1))
+      : (set.level != null ? set.level : (ex[meta.prop] != null ? ex[meta.prop] : 5));
 
     row.innerHTML = `
       <div class="set-num-cell">
@@ -157,15 +356,15 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
       <div class="set-prev-cell">${set.prevInfo || "—"}</div>
 
       <div class="set-stepper-cell cardio-time-mode-cell">
-        <button type="button" class="btn-step btn-dec-min">-</button>
-        <input type="number" min="1" max="180" class="step-input input-minutes" value="${mins}">
-        <button type="button" class="btn-step btn-inc-min">+</button>
+        <button type="button" class="btn-step btn-dec-time">-</button>
+        <input type="number" min="${timeUnit === 'sec' ? 5 : 1}" max="${timeUnit === 'sec' ? 7200 : 180}" step="${timeUnit === 'sec' ? 10 : 1}" class="step-input input-time-val" value="${timeVal}">
+        <button type="button" class="btn-step btn-inc-time">+</button>
         <button type="button" class="btn-open-cardio-timer" title="Нажал и побежал (запустить таймер)">${stopwatchIcon}</button>
       </div>
 
       <div class="set-stepper-cell cardio-param-mode-cell">
         <button type="button" class="btn-step btn-dec-param">-</button>
-        <input type="number" class="step-input input-cardio-set-param" value="${paramVal}" step="${isEllipse ? 1 : 0.5}">
+        <input type="number" class="step-input input-cardio-set-param" value="${paramVal}" step="${meta.step}">
         <button type="button" class="btn-step btn-inc-param">+</button>
       </div>
 
@@ -178,88 +377,107 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
       </div>
     `;
 
-    const inputMin = row.querySelector(".input-minutes");
+    const inputTimeVal = row.querySelector(".input-time-val");
     const inputParam = row.querySelector(".input-cardio-set-param");
     const btnCheck = row.querySelector(".btn-complete-set");
     const timerBtn = row.querySelector(".btn-open-cardio-timer");
 
-    // Степер минут
-    row.querySelector(".btn-dec-min").addEventListener("click", (e) => {
+    // Степер времени (сек или мин)
+    row.querySelector(".btn-dec-time").addEventListener("click", (e) => {
       e.stopPropagation();
-      set.minutes = Math.max(1, (set.minutes || 20) - (set.minutes > 5 ? 5 : 1));
-      inputMin.value = set.minutes;
-      set.time = `${set.minutes} мин`;
+      if (timeUnit === "sec") {
+        set.seconds = Math.max(5, (set.seconds || 1200) - ((set.seconds || 1200) > 60 ? 30 : 10));
+        inputTimeVal.value = set.seconds;
+        set.time = `${set.seconds} сек`;
+      } else {
+        set.minutes = Math.max(1, (set.minutes || 20) - ((set.minutes || 20) > 5 ? 5 : 1));
+        inputTimeVal.value = set.minutes;
+        set.time = `${set.minutes} мин`;
+      }
       onSaveSession();
     });
 
-    row.querySelector(".btn-inc-min").addEventListener("click", (e) => {
+    row.querySelector(".btn-inc-time").addEventListener("click", (e) => {
       e.stopPropagation();
-      set.minutes = (set.minutes || 20) + 5;
-      inputMin.value = set.minutes;
-      set.time = `${set.minutes} мин`;
+      if (timeUnit === "sec") {
+        set.seconds = (set.seconds || 1200) + ((set.seconds || 1200) >= 60 ? 30 : 10);
+        inputTimeVal.value = set.seconds;
+        set.time = `${set.seconds} сек`;
+      } else {
+        set.minutes = (set.minutes || 20) + 5;
+        inputTimeVal.value = set.minutes;
+        set.time = `${set.minutes} мин`;
+      }
       onSaveSession();
     });
 
-    inputMin.addEventListener("change", () => {
-      const val = parseInt(inputMin.value);
-      set.minutes = isNaN(val) || val <= 0 ? 20 : val;
-      set.time = `${set.minutes} мин`;
+    inputTimeVal.addEventListener("change", () => {
+      const val = parseInt(inputTimeVal.value, 10);
+      if (timeUnit === "sec") {
+        set.seconds = isNaN(val) || val <= 0 ? 60 : val;
+        set.time = `${set.seconds} сек`;
+      } else {
+        set.minutes = isNaN(val) || val <= 0 ? 20 : val;
+        set.time = `${set.minutes} мин`;
+      }
       onSaveSession();
     });
 
-    // Степер параметра (уклон или тяжесть)
+    // Степер параметра (уклон / тяжесть / нагрузка)
     row.querySelector(".btn-dec-param").addEventListener("click", (e) => {
       e.stopPropagation();
-      if (isEllipse) {
-        set.level = Math.max(1, (set.level != null ? set.level : (ex.resistanceLevel || 5)) - 1);
-        inputParam.value = set.level;
-      } else {
-        const cur = set.incline != null ? set.incline : (ex.incline || 1);
-        set.incline = Math.max(0, Math.round((cur - 0.5) * 10) / 10);
-        inputParam.value = set.incline;
-      }
+      let cur = parseFloat(inputParam.value) || meta.defaultVal;
+      let next = meta.step < 1 ? Math.round((cur - meta.step) * 10) / 10 : cur - meta.step;
+      const res = Math.max(meta.min, next);
+      if (meta.prop === "incline") set.incline = res;
+      else set.level = res;
+      inputParam.value = res;
       onSaveSession();
     });
 
     row.querySelector(".btn-inc-param").addEventListener("click", (e) => {
       e.stopPropagation();
-      if (isEllipse) {
-        set.level = Math.min(25, (set.level != null ? set.level : (ex.resistanceLevel || 5)) + 1);
-        inputParam.value = set.level;
-      } else {
-        const cur = set.incline != null ? set.incline : (ex.incline || 1);
-        set.incline = Math.min(20, Math.round((cur + 0.5) * 10) / 10);
-        inputParam.value = set.incline;
-      }
+      let cur = parseFloat(inputParam.value) || meta.defaultVal;
+      let next = meta.step < 1 ? Math.round((cur + meta.step) * 10) / 10 : cur + meta.step;
+      const res = Math.min(meta.max, next);
+      if (meta.prop === "incline") set.incline = res;
+      else set.level = res;
+      inputParam.value = res;
       onSaveSession();
     });
 
     inputParam.addEventListener("change", () => {
       const val = parseFloat(inputParam.value);
-      if (isEllipse) {
-        set.level = isNaN(val) ? 5 : Math.max(1, Math.round(val));
-      } else {
-        set.incline = isNaN(val) ? 1 : Math.max(0, val);
-      }
+      const res = isNaN(val) ? meta.defaultVal : Math.max(meta.min, Math.min(meta.max, val));
+      if (meta.prop === "incline") set.incline = res;
+      else set.level = res;
       onSaveSession();
     });
 
-    // «Нажал и побежал»
+    // Таймер «Нажал и побежал»
     timerBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const currentMin = set.minutes || 20;
+      const currentTargetSec = timeUnit === "sec" ? (set.seconds || 60) : ((set.minutes || 20) * 60);
       window.StopwatchModal.openCardioTimerModal({
         title: ex.name,
-        targetSeconds: currentMin * 60,
+        targetSeconds: currentTargetSec,
         mode: "time",
-        incline: !isEllipse ? (set.incline != null ? set.incline : ex.incline) : null,
-        level: isEllipse ? (set.level != null ? set.level : ex.resistanceLevel) : null,
-        defaultTimeStr: `${currentMin} мин`,
+        timeUnit,
+        incline: meta.prop === "incline" ? (set.incline != null ? set.incline : ex.incline) : null,
+        level: meta.type === "ellipse" ? (set.level != null ? set.level : ex.resistanceLevel) : null,
+        bikeLevel: meta.type === "bike" ? (set.level != null ? set.level : ex.bikeLevel) : null,
+        defaultTimeStr: timeUnit === "sec" ? `${currentTargetSec} сек` : `${Math.round(currentTargetSec / 60)} мин`,
         onSaveTime: (finalSec, timeFormatted) => {
-          const actualMins = Math.max(1, Math.round(finalSec / 60));
-          set.minutes = actualMins;
-          set.time = `${actualMins} мин`;
-          inputMin.value = actualMins;
+          if (timeUnit === "sec") {
+            set.seconds = finalSec;
+            set.time = `${finalSec} сек`;
+            inputTimeVal.value = finalSec;
+          } else {
+            const actualMins = Math.max(1, Math.round(finalSec / 60));
+            set.minutes = actualMins;
+            set.time = `${actualMins} мин`;
+            inputTimeVal.value = actualMins;
+          }
           set.completed = true;
           set.completedAt = Date.now();
           btnCheck.classList.add("active");
@@ -293,9 +511,12 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
     });
 
   } else {
-    // РЕЖИМ 1: ПО ДИСТАНЦИИ (по умолчанию)
-    const dist = set.distance !== undefined ? set.distance : (ex.defaultDistance || 0.4);
-    const time = set.time || set.reps || ex.defaultPace || "04:20";
+    // ================= РЕЖИМ 1: ПО ДИСТАНЦИИ =================
+    const rawDist = set.distance !== undefined ? set.distance : (ex.defaultDistance || (distUnit === "m" ? 400 : 0.4));
+    const dist = distUnit === "m" ? (rawDist < 10 ? Math.round(rawDist * 1000) : Math.round(rawDist)) : (rawDist > 50 ? Math.round((rawDist / 1000) * 100) / 100 : rawDist);
+    set.distance = dist;
+
+    let timeVal = set.time || set.reps || ex.defaultPace || (timeUnit === "sec" ? "90" : "04:20");
 
     row.innerHTML = `
       <div class="set-num-cell">
@@ -305,12 +526,18 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
       
       <div class="set-stepper-cell cardio-stepper">
         <button type="button" class="btn-step btn-dec-dist">-</button>
-        <input type="number" step="0.1" min="0.05" class="step-input input-distance" value="${dist}">
+        <input type="number" step="${distUnit === 'm' ? 50 : 0.1}" min="${distUnit === 'm' ? 10 : 0.05}" class="step-input input-distance" value="${dist}">
         <button type="button" class="btn-step btn-inc-dist">+</button>
       </div>
 
       <div class="set-stepper-cell cardio-time-cell">
-        <input type="text" class="step-input input-time" value="${time}" placeholder="4:20">
+        ${timeUnit === 'sec' ? `
+          <button type="button" class="btn-step btn-dec-sec-time">-</button>
+          <input type="number" step="5" min="5" class="step-input input-time" value="${parseInt(timeVal, 10) || 90}">
+          <button type="button" class="btn-step btn-inc-sec-time">+</button>
+        ` : `
+          <input type="text" class="step-input input-time" value="${timeVal}" placeholder="04:20">
+        `}
         <button type="button" class="btn-open-cardio-timer" title="Нажал и побежал (запустить секундомер отрезка)">${stopwatchIcon}</button>
       </div>
 
@@ -328,47 +555,88 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
     const btnCheck = row.querySelector(".btn-complete-set");
     const timerBtn = row.querySelector(".btn-open-cardio-timer");
 
+    // Степер дистанции
     row.querySelector(".btn-dec-dist").addEventListener("click", (e) => {
       e.stopPropagation();
-      let current = parseFloat(set.distance) || 0.4;
-      set.distance = Math.max(0.05, Math.round((current - 0.1) * 10) / 10);
+      let current = parseFloat(set.distance) || (distUnit === "m" ? 400 : 0.4);
+      if (distUnit === "m") {
+        set.distance = Math.max(10, current - 50);
+      } else {
+        set.distance = Math.max(0.05, Math.round((current - 0.1) * 10) / 10);
+      }
       inputDist.value = set.distance;
       onSaveSession();
     });
 
     row.querySelector(".btn-inc-dist").addEventListener("click", (e) => {
       e.stopPropagation();
-      let current = parseFloat(set.distance) || 0.4;
-      set.distance = Math.round((current + 0.1) * 10) / 10;
+      let current = parseFloat(set.distance) || (distUnit === "m" ? 400 : 0.4);
+      if (distUnit === "m") {
+        set.distance = current + 50;
+      } else {
+        set.distance = Math.round((current + 0.1) * 10) / 10;
+      }
       inputDist.value = set.distance;
       onSaveSession();
     });
 
     inputDist.addEventListener("change", () => {
       const val = parseFloat(inputDist.value);
-      set.distance = isNaN(val) ? 0.4 : val;
+      set.distance = isNaN(val) ? (distUnit === "m" ? 400 : 0.4) : val;
       onSaveSession();
     });
+
+    // Изменение времени (секунды или текстовый темп)
+    if (timeUnit === "sec") {
+      const decSecBtn = row.querySelector(".btn-dec-sec-time");
+      const incSecBtn = row.querySelector(".btn-inc-sec-time");
+      if (decSecBtn && incSecBtn) {
+        decSecBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          let cur = parseInt(inputTime.value, 10) || 90;
+          let next = Math.max(5, cur - 5);
+          inputTime.value = next;
+          set.time = String(next);
+          onSaveSession();
+        });
+        incSecBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          let cur = parseInt(inputTime.value, 10) || 90;
+          let next = cur + 5;
+          inputTime.value = next;
+          set.time = String(next);
+          onSaveSession();
+        });
+      }
+    }
 
     inputTime.addEventListener("change", () => {
-      set.time = inputTime.value.trim() || "04:20";
+      set.time = inputTime.value.trim() || (timeUnit === "sec" ? "90" : "04:20");
       onSaveSession();
     });
 
-    // «Нажал и побежал»
+    // Таймер отрезка
     timerBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const currentDist = set.distance || 0.4;
+      const currentDist = set.distance || (distUnit === "m" ? 400 : 0.4);
       window.StopwatchModal.openCardioTimerModal({
         title: ex.name,
         mode: "distance",
-        distanceKm: currentDist,
-        incline: !isEllipse ? (set.incline != null ? set.incline : ex.incline) : null,
-        level: isEllipse ? (set.level != null ? set.level : ex.resistanceLevel) : null,
-        defaultTimeStr: set.time || "04:20",
+        distance: currentDist,
+        distUnit,
+        timeUnit,
+        incline: meta.prop === "incline" ? (set.incline != null ? set.incline : ex.incline) : null,
+        level: meta.type === "ellipse" ? (set.level != null ? set.level : ex.resistanceLevel) : null,
+        bikeLevel: meta.type === "bike" ? (set.level != null ? set.level : ex.bikeLevel) : null,
+        defaultTimeStr: set.time || (timeUnit === "sec" ? "90" : "04:20"),
         onSaveTime: (finalSec, timeFormatted) => {
-          set.time = timeFormatted;
-          inputTime.value = timeFormatted;
+          if (timeUnit === "sec") {
+            set.time = String(finalSec);
+            inputTime.value = finalSec;
+          } else {
+            set.time = timeFormatted;
+            inputTime.value = timeFormatted;
+          }
           set.completed = true;
           set.completedAt = Date.now();
           btnCheck.classList.add("active");
@@ -417,6 +685,11 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
 window.CardioHelper = {
   isCardioExercise,
   getCardioType,
+  getCardioParamMeta,
+  getDistUnit,
+  getTimeUnit,
+  toggleDistanceUnit,
+  toggleTimeUnit,
   renderCardioControls,
   renderCardioSetRow
 };

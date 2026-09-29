@@ -48,7 +48,7 @@ function openAddExerciseModal(onSelect) {
                 <div class="catalog-badges">
                   <span class="badge-cat">${item.category}</span>
                   <span class="badge-equip">${item.equip || "Снаряд"}</span>
-                  <span class="badge-reps">${item.isCardio || item.category === "Бег" || item.category === "Эллипс" ? item.targetReps : item.targetReps + " повт"}</span>
+                  <span class="badge-reps">${item.isCardio || item.category === "Бег" || item.category === "Эллипс" || item.category === "Вело" ? item.targetReps : item.targetReps + " повт"}</span>
                 </div>
               </div>
               <button type="button" class="btn-select-ex">+</button>
@@ -179,7 +179,8 @@ function openEditExerciseModal(exercise, onSave) {
               <label class="form-label">Тренажер</label>
               <select id="edit-cardio-type" class="form-select">
                 <option value="treadmill" ${cardioType === "treadmill" ? "selected" : ""}>Дорожка (Уклон %)</option>
-                <option value="ellipse" ${cardioType === "ellipse" ? "selected" : ""}>Эллипс / Вело (Тяжесть Lvl)</option>
+                <option value="ellipse" ${cardioType === "ellipse" ? "selected" : ""}>Эллипс (Тяжесть Lvl)</option>
+                <option value="bike" ${cardioType === "bike" ? "selected" : ""}>Велотренажер (Нагрузка Lvl)</option>
               </select>
             </div>
             <div class="form-group" style="flex:1;">
@@ -193,8 +194,8 @@ function openEditExerciseModal(exercise, onSave) {
 
           <div class="form-row">
             <div class="form-group" style="flex:1;">
-              <label class="form-label">${cardioType === "ellipse" ? "Тяжесть (Lvl)" : "Уклон дорожки (%)"}</label>
-              <input type="number" id="edit-cardio-param" class="form-input" value="${cardioType === "ellipse" ? (exercise.resistanceLevel !== undefined ? exercise.resistanceLevel : 5) : (exercise.incline !== undefined ? exercise.incline : 1)}" step="${cardioType === "ellipse" ? 1 : 0.5}">
+              <label class="form-label">${cardioType === "bike" ? "Нагрузка (Lvl)" : (cardioType === "ellipse" ? "Тяжесть (Lvl)" : "Уклон дорожки (%)")}</label>
+              <input type="number" id="edit-cardio-param" class="form-input" value="${cardioType === "bike" ? (exercise.bikeLevel !== undefined ? exercise.bikeLevel : 5) : (cardioType === "ellipse" ? (exercise.resistanceLevel !== undefined ? exercise.resistanceLevel : 5) : (exercise.incline !== undefined ? exercise.incline : 1))}" step="${cardioType === "treadmill" ? 0.5 : 1}">
             </div>
             <div class="form-group" style="flex:1;">
               <label class="form-label">${cardioMode === "time" ? "Время (мин)" : "Дистанция (км)"}</label>
@@ -260,24 +261,31 @@ function openEditExerciseModal(exercise, onSave) {
     }
 
     modal.querySelector("#edit-save-btn").addEventListener("click", () => {
-      const prevWasCardio = Boolean(exercise.isCardio || exercise.category === "Бег" || exercise.category === "Эллипс");
+      const prevWasCardio = Boolean(exercise.isCardio || exercise.category === "Бег" || exercise.category === "Эллипс" || exercise.category === "Вело");
       exercise.name = modal.querySelector("#edit-ex-name").value.trim() || exercise.name;
       exercise.youtubeUrl = modal.querySelector("#edit-ex-youtube").value.trim();
       exercise.tip = modal.querySelector("#edit-ex-tip").value.trim();
-      exercise.restSeconds = parseInt(modal.querySelector("#edit-ex-rest").value) || 0;
+      exercise.restSeconds = parseInt(modal.querySelector("#edit-ex-rest").value, 10) || 0;
       exercise.isCardio = isCardio;
 
       if (isCardio) {
         exercise.cardioType = cardioType;
         exercise.cardioMode = cardioMode;
-        if (cardioType === "ellipse") {
+        if (cardioType === "bike") {
+          const paramEl = modal.querySelector("#edit-cardio-param");
+          exercise.bikeLevel = paramEl ? (parseInt(paramEl.value, 10) || 5) : 5;
+          exercise.category = "Вело";
+          exercise.equip = "Велотренажер";
+        } else if (cardioType === "ellipse") {
           const paramEl = modal.querySelector("#edit-cardio-param");
           exercise.resistanceLevel = paramEl ? (parseInt(paramEl.value, 10) || 5) : 5;
           exercise.category = "Эллипс";
+          exercise.equip = "Эллипс";
         } else {
           const paramEl = modal.querySelector("#edit-cardio-param");
           exercise.incline = paramEl ? (parseFloat(paramEl.value) || 0) : 1;
           exercise.category = "Бег";
+          exercise.equip = "Дорожка";
         }
 
         if (cardioMode === "time") {
@@ -304,7 +312,7 @@ function openEditExerciseModal(exercise, onSave) {
         exercise.targetReps = repsEl ? repsEl.value.trim() : (exercise.targetReps || "8-10");
         const weightEl = modal.querySelector("#edit-ex-weight");
         exercise.defaultWeight = weightEl ? (parseFloat(weightEl.value) || 20) : 20;
-        if (exercise.category === "Бег" || exercise.category === "Эллипс") exercise.category = "Свое";
+        if (exercise.category === "Бег" || exercise.category === "Эллипс" || exercise.category === "Вело") exercise.category = "Свое";
 
         if (prevWasCardio && exercise.sets) {
           exercise.sets.forEach((s) => {

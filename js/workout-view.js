@@ -99,13 +99,29 @@ function renderWorkoutView(container, options) {
     const card = document.createElement("div");
     card.className = "ex-card";
 
-    const isCardio = Boolean(ex.isCardio || ex.category === "Бег" || ex.category === "Эллипс");
+    const isCardio = window.CardioHelper ? window.CardioHelper.isCardioExercise(ex) : Boolean(ex.isCardio || ex.category === "Бег" || ex.category === "Эллипс" || ex.category === "Вело");
     const videoUrl = ex.youtubeUrl || `https://www.youtube.com/results?search_query=${encodeURIComponent("техника " + ex.name)}`;
     const isTimed = !isCardio && ((ex.name && (ex.name.toLowerCase().includes("вис") || ex.name.toLowerCase().includes("планк") || ex.name.toLowerCase().includes("вакуум"))) || (ex.targetReps && String(ex.targetReps).includes("сек")));
     const exPR = window.StorageModule.getExercisePR(ex.id, ex.name);
     const prBadge = exPR && (exPR.weight > 0 || exPR.distance > 0)
-      ? ` • <span class="pr-badge">Рекорд: ${exPR.weight ? exPR.weight + " кг" : exPR.distance + " км"}</span>`
+      ? ` • <span class="pr-badge">Рекорд: ${exPR.weight ? exPR.weight + " кг" : (ex.distUnit === "m" ? exPR.distance + " м" : exPR.distance + " км")}</span>`
       : "";
+
+    // Динамические заголовки колонок для кардио
+    let cardioWeightCol = "ДИСТ (КМ)";
+    let cardioRepsCol = "ТЕМП / ВР";
+    if (isCardio) {
+      const dUnit = window.CardioHelper ? window.CardioHelper.getDistUnit(ex) : (ex.distUnit || "km");
+      const tUnit = window.CardioHelper ? window.CardioHelper.getTimeUnit(ex) : (ex.timeUnit || "min");
+      const paramMeta = window.CardioHelper ? window.CardioHelper.getCardioParamMeta(ex) : null;
+      if (ex.cardioMode === "time") {
+        cardioWeightCol = tUnit === "sec" ? "ВРЕМЯ (С)" : "ВРЕМЯ (М)";
+        cardioRepsCol = paramMeta ? paramMeta.shortName : "УКЛОН";
+      } else {
+        cardioWeightCol = dUnit === "m" ? "ДИСТ (М)" : "ДИСТ (КМ)";
+        cardioRepsCol = tUnit === "sec" ? "ВРЕМЯ (С)" : "ТЕМП / ВР";
+      }
+    }
 
     card.innerHTML = `
       <div class="ex-title-row">
@@ -125,7 +141,7 @@ function renderWorkoutView(container, options) {
 
       <div class="ex-target-info">
         ${isCardio 
-          ? `${ex.sets.length} отрезка • Цель: ${ex.targetReps || (ex.defaultDistance ? ex.defaultDistance + " км" : "Бег")} • Отдых ${window.TimerModule.formatTime(ex.restSeconds || 0)}`
+          ? `${ex.sets.length} отрезка • Цель: ${ex.targetReps || (ex.defaultDistance ? (ex.distUnit === 'm' ? ex.defaultDistance + ' м' : ex.defaultDistance + ' км') : "Кардио")} • Отдых ${window.TimerModule.formatTime(ex.restSeconds || 0)}`
           : `${ex.sets.length} подх. по ${ex.targetReps || "10-12"} • Отдых ${window.TimerModule.formatTime(ex.restSeconds != null ? ex.restSeconds : 60)} ${isTimed ? '• <span class="timed-badge">На время</span>' : ""}`
         }
         ${isCardio ? ' • <span class="run-badge">Кардио</span>' : ""}
@@ -139,8 +155,8 @@ function renderWorkoutView(container, options) {
       <div class="sets-header-row ${isCardio ? "cardio-header" : ""}">
         <span class="sh-num">${isCardio ? "№" : "СЕТ"}</span>
         <span class="sh-prev">ПРЕД</span>
-        <span class="sh-weight">${isCardio ? (ex.cardioMode === 'time' ? "ВРЕМЯ" : "ДИСТ (КМ)") : "КГ"}</span>
-        <span class="sh-reps">${isCardio ? (ex.cardioMode === 'time' ? (window.CardioHelper && window.CardioHelper.getCardioType(ex) === 'ellipse' ? "ТЯЖЕСТЬ" : "УКЛОН") : "ТЕМП / ВРЕМЯ") : (isTimed ? "СЕК" : "ПОВТ")}</span>
+        <span class="sh-weight">${isCardio ? cardioWeightCol : "КГ"}</span>
+        <span class="sh-reps">${isCardio ? cardioRepsCol : (isTimed ? "СЕК" : "ПОВТ")}</span>
         <span class="sh-check">ГОТОВО</span>
         <span class="sh-del"></span>
       </div>
@@ -194,7 +210,7 @@ function renderWorkoutView(container, options) {
     // Замена упражнения на другое
     card.querySelector(".btn-replace-ex").addEventListener("click", () => {
       window.ModalsModule.openAddExerciseModal((replacementEx) => {
-        const isRepCardio = Boolean(replacementEx.isCardio || replacementEx.category === "Бег" || replacementEx.category === "Эллипс");
+        const isRepCardio = window.CardioHelper ? window.CardioHelper.isCardioExercise(replacementEx) : Boolean(replacementEx.isCardio || replacementEx.category === "Бег" || replacementEx.category === "Эллипс" || replacementEx.category === "Вело");
         const lastSets = window.StorageModule.getLastPerformance(replacementEx.id, replacementEx.name);
         const exPR = window.StorageModule.getExercisePR(replacementEx.id, replacementEx.name);
         const isBodyweight = Boolean(
@@ -276,13 +292,17 @@ function renderWorkoutView(container, options) {
       const lastSet = ex.sets[ex.sets.length - 1];
       if (isCardio) {
         const isTimeMode = ex.cardioMode === "time";
+        const meta = window.CardioHelper ? window.CardioHelper.getCardioParamMeta(ex) : { prop: 'incline', defaultVal: 1 };
+        const defaultDist = (ex.distUnit === "m") ? 400 : 0.4;
         ex.sets.push({
           setNumber: ex.sets.length + 1,
-          distance: lastSet && lastSet.distance !== undefined ? lastSet.distance : (ex.defaultDistance || 0.4),
-          time: lastSet && lastSet.time ? lastSet.time : (isTimeMode ? `${ex.targetMinutes || 20} мин` : (ex.defaultPace || "04:20")),
+          distance: lastSet && lastSet.distance !== undefined ? lastSet.distance : (ex.defaultDistance || defaultDist),
+          time: lastSet && lastSet.time ? lastSet.time : (isTimeMode ? (ex.timeUnit === "sec" ? "60 сек" : `${ex.targetMinutes || 20} мин`) : (ex.timeUnit === "sec" ? "90" : (ex.defaultPace || "04:20"))),
           minutes: lastSet && lastSet.minutes ? lastSet.minutes : (ex.targetMinutes || 20),
+          seconds: lastSet && lastSet.seconds ? lastSet.seconds : 60,
           incline: lastSet && lastSet.incline != null ? lastSet.incline : (ex.incline != null ? ex.incline : 1),
-          level: lastSet && lastSet.level != null ? lastSet.level : (ex.resistanceLevel != null ? ex.resistanceLevel : 5),
+          level: lastSet && lastSet.level != null ? lastSet.level : (ex[meta.prop] != null ? ex[meta.prop] : meta.defaultVal),
+          bikeLevel: lastSet && lastSet.bikeLevel != null ? lastSet.bikeLevel : (ex.bikeLevel != null ? ex.bikeLevel : 5),
           completed: false,
           prevInfo: null
         });
@@ -341,7 +361,7 @@ function renderWorkoutView(container, options) {
 
   addExBox.querySelector("#btn-open-add-ex").addEventListener("click", () => {
     window.ModalsModule.openAddExerciseModal((newEx) => {
-      const isCardio = Boolean(newEx.isCardio || newEx.category === "Бег" || newEx.category === "Эллипс");
+      const isCardio = window.CardioHelper ? window.CardioHelper.isCardioExercise(newEx) : Boolean(newEx.isCardio || newEx.category === "Бег" || newEx.category === "Эллипс" || newEx.category === "Вело");
       const lastSets = window.StorageModule.getLastPerformance(newEx.id, newEx.name);
       const exPR = window.StorageModule.getExercisePR(newEx.id, newEx.name);
       const isBodyweight = Boolean(
@@ -352,21 +372,25 @@ function renderWorkoutView(container, options) {
 
       const initialSets = [];
       const count = newEx.setsCount || (newEx.sets ? newEx.sets.length : 3);
+      const meta = window.CardioHelper ? window.CardioHelper.getCardioParamMeta(newEx) : { prop: 'incline', defaultVal: 1 };
+      const defaultDist = (newEx.distUnit === "m") ? 400 : 0.4;
       for (let s = 1; s <= count; s++) {
         const prevSet = lastSets && lastSets[s - 1] ? lastSets[s - 1] : (lastSets && lastSets[0] ? lastSets[0] : null);
 
         if (isCardio) {
-          const dist = prevSet && prevSet.distance !== undefined ? prevSet.distance : (newEx.defaultDistance || 0.4);
-          const pace = prevSet && prevSet.time ? prevSet.time : (newEx.defaultPace || "04:20");
+          const dist = prevSet && prevSet.distance !== undefined ? prevSet.distance : (newEx.defaultDistance || defaultDist);
+          const pace = prevSet && prevSet.time ? prevSet.time : (newEx.defaultPace || (newEx.timeUnit === "sec" ? "90" : "04:20"));
           initialSets.push({
             setNumber: s,
             distance: dist,
             time: pace,
             minutes: newEx.targetMinutes || 20,
+            seconds: 60,
             incline: newEx.incline != null ? newEx.incline : 1,
             level: newEx.resistanceLevel != null ? newEx.resistanceLevel : 5,
+            bikeLevel: newEx.bikeLevel != null ? newEx.bikeLevel : 5,
             completed: false,
-            prevInfo: prevSet ? `${prevSet.distance || ''} км (${prevSet.time || ''})` : null
+            prevInfo: prevSet ? `${prevSet.distance || ''} ${newEx.distUnit === 'm' ? 'м' : 'км'} (${prevSet.time || ''})` : null
           });
         } else {
           let baseWeight = isBodyweight ? 0 : 20;

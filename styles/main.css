@@ -781,31 +781,38 @@ body {
   background: rgba(6, 78, 59, 0.2);
 }
 
-/* ПАНЕЛЬ УПРАВЛЕНИЯ КАРДИО (РЕЖИМЫ + УКЛОН / ТЯЖЕСТЬ) */
+/* ПАНЕЛЬ УПРАВЛЕНИЯ КАРДИО (ОБОРУДОВАНИЕ + РЕЖИМЫ + ЕДИНИЦЫ + ПАРАМЕТРЫ) */
 .cardio-control-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: #0d0d0d;
+  border: 1px solid #1f1f1f;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin: 6px 0 8px 0;
+  box-sizing: border-box;
+}
+
+.cardio-ctrl-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  background: transparent;
-  border: none;
-  padding: 0 2px;
-  margin: 4px 0 6px 0;
-  height: 26px;
-  box-sizing: border-box;
+  flex-wrap: wrap;
 }
 
-.cardio-mode-toggle {
+.cardio-pill-group {
   display: inline-flex;
   align-items: center;
-  background: #141414;
+  background: #161616;
   border: 1px solid #282828;
   border-radius: 6px;
   padding: 2px;
   gap: 2px;
 }
 
-.btn-cardio-mode {
+.btn-cardio-pill {
   background: transparent;
   border: none;
   color: #888888;
@@ -818,9 +825,57 @@ body {
   white-space: nowrap;
 }
 
-.btn-cardio-mode.active {
+.btn-cardio-pill.active {
   background: #2a2a2a;
   color: #ffffff;
+}
+
+.cardio-units-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardio-unit-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cub-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #777777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cardio-unit-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: #161616;
+  border: 1px solid #282828;
+  border-radius: 5px;
+  padding: 1px;
+  gap: 1px;
+}
+
+.btn-cardio-u {
+  background: transparent;
+  border: none;
+  color: #888888;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-cardio-u.active {
+  background: #2a2a2a;
+  color: #34d399;
 }
 
 .cardio-param-box {
@@ -906,7 +961,7 @@ body {
 }
 
 .cardio-time-cell .input-time {
-  width: 58px;
+  width: 50px;
   height: 28px;
   background: #121212;
   border: 1px solid #242424;
@@ -917,6 +972,26 @@ body {
   font-family: var(--font-mono);
   text-align: center;
   outline: none;
+}
+
+.cardio-time-cell .btn-step {
+  width: 22px;
+  height: 28px;
+  background: #161616;
+  border: 1px solid #282828;
+  border-radius: 4px;
+  color: #cccccc;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardio-time-cell .btn-step:active {
+  background: #282828;
+  color: #ffffff;
 }
 
 .cardio-time-mode-cell {

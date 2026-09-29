@@ -168,8 +168,12 @@ function openCardioTimerModal({
   targetSeconds = 0,
   mode = "distance",
   distanceKm = null,
+  distance = null,
+  distUnit = "km",
+  timeUnit = "min",
   incline = null,
   level = null,
+  bikeLevel = null,
   defaultTimeStr = "",
   onSaveTime
 }) {
@@ -190,6 +194,8 @@ function openCardioTimerModal({
       targetSec = m * 60 + s;
     } else if (defaultTimeStr.toLowerCase().includes("мин")) {
       targetSec = (parseInt(defaultTimeStr, 10) || 0) * 60;
+    } else if (defaultTimeStr.toLowerCase().includes("сек")) {
+      targetSec = parseInt(defaultTimeStr, 10) || 0;
     } else {
       targetSec = parseInt(defaultTimeStr, 10) || 0;
     }
@@ -206,10 +212,17 @@ function openCardioTimerModal({
   let isTargetHitAlerted = false;
 
   const metaBadges = [];
-  if (distanceKm) metaBadges.push(`${distanceKm} км`);
+  if (distance != null) {
+    metaBadges.push(distUnit === "m" ? `${distance} м` : `${distance} км`);
+  } else if (distanceKm != null) {
+    metaBadges.push(`${distanceKm} км`);
+  }
   if (incline !== null && incline !== undefined) metaBadges.push(`Уклон: ${incline}%`);
   if (level !== null && level !== undefined) metaBadges.push(`Тяжесть: ${level}`);
-  if (mode === "time" && targetSec > 0) metaBadges.push(`Цель: ${Math.round(targetSec / 60)} мин`);
+  if (bikeLevel !== null && bikeLevel !== undefined) metaBadges.push(`Нагрузка: ${bikeLevel}`);
+  if (mode === "time" && targetSec > 0) {
+    metaBadges.push(timeUnit === "sec" ? `Цель: ${targetSec} сек` : `Цель: ${Math.round(targetSec / 60)} мин`);
+  }
 
   modal.innerHTML = `
     <div class="modal-card static-timer-card cardio-timer-card">
