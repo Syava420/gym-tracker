@@ -192,9 +192,11 @@ function openCardioTimerModal({
       const m = parseInt(parts[0], 10) || 0;
       const s = parseInt(parts[1], 10) || 0;
       targetSec = m * 60 + s;
+    } else if (defaultTimeStr.toLowerCase().includes("ч") || defaultTimeStr.toLowerCase().includes("час")) {
+      targetSec = Math.round((parseFloat(defaultTimeStr) || 0) * 3600);
     } else if (defaultTimeStr.toLowerCase().includes("мин")) {
       targetSec = (parseInt(defaultTimeStr, 10) || 0) * 60;
-    } else if (defaultTimeStr.toLowerCase().includes("сек")) {
+    } else if (defaultTimeStr.toLowerCase().includes("сек") || defaultTimeStr.toLowerCase().includes("с")) {
       targetSec = parseInt(defaultTimeStr, 10) || 0;
     } else {
       targetSec = parseInt(defaultTimeStr, 10) || 0;
@@ -217,11 +219,17 @@ function openCardioTimerModal({
   } else if (distanceKm != null) {
     metaBadges.push(`${distanceKm} км`);
   }
-  if (incline !== null && incline !== undefined) metaBadges.push(`Уклон: ${incline}%`);
-  if (level !== null && level !== undefined) metaBadges.push(`Тяжесть: ${level}`);
+  if (incline !== null && incline !== undefined && incline > 0) metaBadges.push(`Уклон: ${incline}%`);
+  if (level !== null && level !== undefined) metaBadges.push(`Тяжесть / Уровень: ${level}`);
   if (bikeLevel !== null && bikeLevel !== undefined) metaBadges.push(`Нагрузка: ${bikeLevel}`);
   if (mode === "time" && targetSec > 0) {
-    metaBadges.push(timeUnit === "sec" ? `Цель: ${targetSec} сек` : `Цель: ${Math.round(targetSec / 60)} мин`);
+    if (timeUnit === "sec") {
+      metaBadges.push(`Цель: ${targetSec} сек`);
+    } else if (timeUnit === "hour") {
+      metaBadges.push(`Цель: ${Math.round((targetSec / 3600) * 100) / 100} ч`);
+    } else {
+      metaBadges.push(`Цель: ${Math.round(targetSec / 60)} мин`);
+    }
   }
 
   modal.innerHTML = `

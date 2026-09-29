@@ -110,16 +110,36 @@ function renderWorkoutView(container, options) {
     // Динамические заголовки колонок для кардио
     let cardioWeightCol = "ДИСТ (КМ)";
     let cardioRepsCol = "ТЕМП / ВР";
+    let isMainToggleable = false;
+    let isSubToggleable = false;
+    let paramBadge = "";
+
     if (isCardio) {
       const dUnit = window.CardioHelper ? window.CardioHelper.getDistUnit(ex) : (ex.distUnit || "km");
       const tUnit = window.CardioHelper ? window.CardioHelper.getTimeUnit(ex) : (ex.timeUnit || "min");
       const paramMeta = window.CardioHelper ? window.CardioHelper.getCardioParamMeta(ex) : null;
+
+      if (paramMeta) {
+        const val = ex[paramMeta.prop] !== undefined ? ex[paramMeta.prop] : (ex.sets && ex.sets[0] && ex.sets[0][paramMeta.prop] !== undefined ? ex.sets[0][paramMeta.prop] : (ex.sets && ex.sets[0] && ex.sets[0].level !== undefined ? ex.sets[0].level : paramMeta.defaultVal));
+        if (paramMeta.type === "treadmill" && val > 0) {
+          paramBadge = `Уклон ${val}% • `;
+        } else if (paramMeta.step > 0 && val > 0) {
+          paramBadge = `${paramMeta.name} ${val} • `;
+        }
+      }
+
       if (ex.cardioMode === "time") {
-        cardioWeightCol = tUnit === "sec" ? "ВРЕМЯ (С)" : "ВРЕМЯ (М)";
+        const tUnitShort = tUnit === "sec" ? "С" : (tUnit === "hour" ? "Ч" : "М");
+        cardioWeightCol = `ВРЕМЯ (${tUnitShort})`;
         cardioRepsCol = paramMeta ? paramMeta.shortName : "УКЛОН";
+        isMainToggleable = true;
+        isSubToggleable = false;
       } else {
         cardioWeightCol = dUnit === "m" ? "ДИСТ (М)" : "ДИСТ (КМ)";
-        cardioRepsCol = tUnit === "sec" ? "ВРЕМЯ (С)" : "ТЕМП / ВР";
+        const tUnitShort = tUnit === "sec" ? "ВРЕМЯ (С)" : (tUnit === "hour" ? "ВРЕМЯ (Ч)" : "ТЕМП / ВР");
+        cardioRepsCol = tUnitShort;
+        isMainToggleable = true;
+        isSubToggleable = true;
       }
     }
 
@@ -141,7 +161,7 @@ function renderWorkoutView(container, options) {
 
       <div class="ex-target-info">
         ${isCardio 
-          ? `${ex.sets.length} отрезка • Цель: ${ex.targetReps || (ex.defaultDistance ? (ex.distUnit === 'm' ? ex.defaultDistance + ' м' : ex.defaultDistance + ' км') : "Кардио")} • Отдых ${window.TimerModule.formatTime(ex.restSeconds || 0)}`
+          ? `${ex.sets.length} отрезка • Цель: ${ex.targetReps || (ex.defaultDistance ? (ex.distUnit === 'm' ? ex.defaultDistance + ' м' : ex.defaultDistance + ' км') : "Кардио")} • ${paramBadge}Отдых ${window.TimerModule.formatTime(ex.restSeconds || 0)}`
           : `${ex.sets.length} подх. по ${ex.targetReps || "10-12"} • Отдых ${window.TimerModule.formatTime(ex.restSeconds != null ? ex.restSeconds : 60)} ${isTimed ? '• <span class="timed-badge">На время</span>' : ""}`
         }
         ${isCardio ? ' • <span class="run-badge">Кардио</span>' : ""}
@@ -150,13 +170,24 @@ function renderWorkoutView(container, options) {
 
       <div class="ex-tip-box" contenteditable="true" title="Кликни, чтобы изменить заметку">${ex.tip || "Нажми сюда, чтобы написать свою заметку"}</div>
 
-      ${isCardio ? `<div class="cardio-controls-mount" id="cardio-controls-${exIndex}"></div>` : ""}
-
       <div class="sets-header-row ${isCardio ? "cardio-header" : ""}">
         <span class="sh-num">${isCardio ? "№" : "СЕТ"}</span>
         <span class="sh-prev">ПРЕД</span>
-        <span class="sh-weight">${isCardio ? cardioWeightCol : "КГ"}</span>
-        <span class="sh-reps">${isCardio ? cardioRepsCol : (isTimed ? "СЕК" : "ПОВТ")}</span>
+        ${isCardio ? `
+          <button type="button" class="sh-col-btn sh-col-toggle-main" id="th-toggle-main-${exIndex}" title="Нажми, чтобы переключить единицы">
+            ${cardioWeightCol} <span class="th-swap-icon">⇄</span>
+          </button>
+          ${isSubToggleable ? `
+            <button type="button" class="sh-col-btn sh-col-toggle-sub" id="th-toggle-sub-${exIndex}" title="Нажми, чтобы переключить сек / мин / час">
+              ${cardioRepsCol} <span class="th-swap-icon">⇄</span>
+            </button>
+          ` : `
+            <span class="sh-reps">${cardioRepsCol}</span>
+          `}
+        ` : `
+          <span class="sh-weight">КГ</span>
+          <span class="sh-reps">${isTimed ? "СЕК" : "ПОВТ"}</span>
+        `}
         <span class="sh-check">ГОТОВО</span>
         <span class="sh-del"></span>
       </div>
@@ -168,11 +199,32 @@ function renderWorkoutView(container, options) {
       </button>
     `;
 
-    // Монтирование панели управления кардио
+    // Интерактивное переключение единиц по клику в шапке
     if (isCardio && window.CardioHelper) {
-      const mount = card.querySelector(`#cardio-controls-${exIndex}`);
-      if (mount) {
-        window.CardioHelper.renderCardioControls(mount, ex, workout, onSaveSession, onRerender);
+      const btnMain = card.querySelector(`#th-toggle-main-${exIndex}`);
+      if (btnMain) {
+        btnMain.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (ex.cardioMode === "time") {
+            window.CardioHelper.cycleTimeUnit(ex);
+          } else {
+            window.CardioHelper.cycleDistanceUnit(ex);
+          }
+          syncToTemplate();
+          onSaveSession();
+          onRerender();
+        });
+      }
+
+      const btnSub = card.querySelector(`#th-toggle-sub-${exIndex}`);
+      if (btnSub) {
+        btnSub.addEventListener("click", (e) => {
+          e.stopPropagation();
+          window.CardioHelper.cycleTimeUnit(ex);
+          syncToTemplate();
+          onSaveSession();
+          onRerender();
+        });
       }
     }
 

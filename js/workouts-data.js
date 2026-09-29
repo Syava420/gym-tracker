@@ -130,11 +130,14 @@ window.EXERCISE_CATALOG = [
   { id: "bike_steady", name: "Вело: Ровный темп на выносливость", category: "Вело", equip: "Велотренажер", defaultDistance: 5.0, defaultPace: "02:30", targetReps: "5.0 км", restSeconds: 0, isCardio: true, cardioType: "bike", tip: "Умеренный пульс 120-135 уд/мин, средняя нагрузка (Level 6-8)" },
   { id: "bike_intervals", name: "Вело: Спринтерские интервалы HIIT", category: "Вело", equip: "Велотренажер", defaultDistance: 1.0, defaultPace: "01:45", targetReps: "1.0 км", restSeconds: 90, isCardio: true, cardioType: "bike", tip: "30 сек спринт на высокой нагрузке (Level 10-14), 1 мин отдых" },
   { id: "bike_hills", name: "Вело: Подъем в гору (силовое кардио)", category: "Вело", equip: "Велотренажер", defaultDistance: 3.0, defaultPace: "03:30", targetReps: "3.0 км", restSeconds: 60, isCardio: true, cardioType: "bike", tip: "Высокое сопротивление (Level 10-15), работа сидя и стоя" },
-  { id: "bike_cooldown", name: "Вело: Заминка и восстановление", category: "Вело", equip: "Велотренажер", defaultDistance: 1.0, defaultPace: "04:00", targetReps: "1.0 км", restSeconds: 0, isCardio: true, cardioType: "bike", tip: "Минимальное сопротивление (Level 1-2), спокойное дыхание" }
+  { id: "bike_cooldown", name: "Вело: Заминка и восстановление", category: "Вело", equip: "Велотренажер", defaultDistance: 1.0, defaultPace: "04:00", targetReps: "1.0 км", restSeconds: 0, isCardio: true, cardioType: "bike", tip: "Минимальное сопротивление (Level 1-2), спокойное дыхание" },
+  // ==================== ГРЕБЛЯ И СТЕППЕР ====================
+  { id: "rower_steady", name: "Гребной тренажер: 2000 м", category: "Кардио", equip: "Гребной тренажер", defaultDistance: 2.0, defaultPace: "08:00", targetReps: "2.0 км", restSeconds: 90, isCardio: true, cardioType: "rower", tip: "Мощный толчок ногами, затем наклон корпуса и тяга к низу ребер" },
+  { id: "stepper_cardio", name: "Степпер / Лестница (StairMaster)", category: "Кардио", equip: "Степпер", defaultDistance: 1.5, defaultPace: "10:00", targetReps: "1.5 км", restSeconds: 60, isCardio: true, cardioType: "stepper", tip: "Прямой корпус, не виснуть на поручнях, упор всей стопой" }
 ];
 
 // Категории для фильтрации "по папкам"
-window.EXERCISE_CATEGORIES = ["Все", "Грудь", "Спина", "Ноги", "Плечи", "Руки", "Пресс", "Бег", "Эллипс", "Вело"];
+window.EXERCISE_CATEGORIES = ["Все", "Грудь", "Спина", "Ноги", "Плечи", "Руки", "Пресс", "Бег", "Эллипс", "Вело", "Кардио"];
 
 // Шаблоны тренировок: пустой список для чистого старта с нуля
 window.DEFAULT_WORKOUTS = [];

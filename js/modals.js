@@ -136,13 +136,19 @@ function openEditExerciseModal(exercise, onSave) {
   let isCardio = Boolean(
     exercise.isCardio || 
     exercise.category === "Бег" || 
-    exercise.category === "Эллипс" ||
+    exercise.category === "Эллипс" || 
+    exercise.category === "Вело" ||
+    exercise.category === "Кардио" ||
     (window.CardioHelper && window.CardioHelper.isCardioExercise(exercise))
   );
-  let cardioType = window.CardioHelper ? window.CardioHelper.getCardioType(exercise) : (exercise.category === "Эллипс" ? "ellipse" : "treadmill");
+  let cardioType = window.CardioHelper ? window.CardioHelper.getCardioType(exercise) : "treadmill";
   let cardioMode = exercise.cardioMode || "distance";
+  let distUnit = window.CardioHelper ? window.CardioHelper.getDistUnit(exercise) : (exercise.distUnit || "km");
+  let timeUnit = window.CardioHelper ? window.CardioHelper.getTimeUnit(exercise) : (exercise.timeUnit || "min");
 
   function renderEditForm() {
+    const paramMeta = window.CardioHelper ? window.CardioHelper.getCardioParamMeta({ cardioType }) : { name: "Уклон", unit: "%", step: 0.5, defaultVal: 1, prop: "incline", min: 0, max: 20 };
+
     modal.innerHTML = `
       <div class="modal-card">
         <div class="modal-header">
@@ -176,37 +182,64 @@ function openEditExerciseModal(exercise, onSave) {
         ${isCardio ? `
           <div class="form-row">
             <div class="form-group" style="flex:1;">
-              <label class="form-label">Тренажер</label>
+              <label class="form-label">Тренажер / Оборудование</label>
               <select id="edit-cardio-type" class="form-select">
-                <option value="treadmill" ${cardioType === "treadmill" ? "selected" : ""}>Дорожка (Уклон %)</option>
+                <option value="treadmill" ${cardioType === "treadmill" ? "selected" : ""}>Беговая дорожка (Уклон %)</option>
+                <option value="bike" ${cardioType === "bike" ? "selected" : ""}>Велотренажер / Велик (Нагрузка Lvl)</option>
                 <option value="ellipse" ${cardioType === "ellipse" ? "selected" : ""}>Эллипс (Тяжесть Lvl)</option>
-                <option value="bike" ${cardioType === "bike" ? "selected" : ""}>Велотренажер (Нагрузка Lvl)</option>
+                <option value="rower" ${cardioType === "rower" ? "selected" : ""}>Гребной тренажер (Тяжесть Lvl)</option>
+                <option value="stepper" ${cardioType === "stepper" ? "selected" : ""}>Степпер / Лестница (Уровень Lvl)</option>
+                <option value="outdoor" ${cardioType === "outdoor" ? "selected" : ""}>Улица / Манеж (Без тренажера)</option>
               </select>
             </div>
             <div class="form-group" style="flex:1;">
-              <label class="form-label">Режим</label>
+              <label class="form-label">Режим кардио</label>
               <select id="edit-cardio-mode" class="form-select">
-                <option value="distance" ${cardioMode === "distance" ? "selected" : ""}>По дистанции (км)</option>
-                <option value="time" ${cardioMode === "time" ? "selected" : ""}>По времени (мин)</option>
+                <option value="distance" ${cardioMode === "distance" ? "selected" : ""}>По дистанции</option>
+                <option value="time" ${cardioMode === "time" ? "selected" : ""}>По времени</option>
               </select>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group" style="flex:1;">
-              <label class="form-label">${cardioType === "bike" ? "Нагрузка (Lvl)" : (cardioType === "ellipse" ? "Тяжесть (Lvl)" : "Уклон дорожки (%)")}</label>
-              <input type="number" id="edit-cardio-param" class="form-input" value="${cardioType === "bike" ? (exercise.bikeLevel !== undefined ? exercise.bikeLevel : 5) : (cardioType === "ellipse" ? (exercise.resistanceLevel !== undefined ? exercise.resistanceLevel : 5) : (exercise.incline !== undefined ? exercise.incline : 1))}" step="${cardioType === "treadmill" ? 0.5 : 1}">
+              <label class="form-label">${cardioMode === "time" ? "Целевое время" : "Целевая дистанция"}</label>
+              <input type="number" step="${cardioMode === "time" ? (timeUnit === 'hour' ? 0.25 : (timeUnit === 'sec' ? 10 : 1)) : (distUnit === 'm' ? 50 : 0.1)}" id="edit-cardio-target-val" class="form-input" value="${cardioMode === "time" ? (timeUnit === 'sec' ? (exercise.targetSeconds || 1200) : (timeUnit === 'hour' ? (exercise.targetHours || 0.5) : (exercise.targetMinutes || 20))) : (distUnit === 'm' ? (exercise.defaultDistance ? (exercise.defaultDistance < 10 ? Math.round(exercise.defaultDistance * 1000) : exercise.defaultDistance) : 400) : (exercise.defaultDistance ? (exercise.defaultDistance > 50 ? Math.round((exercise.defaultDistance / 1000) * 100) / 100 : exercise.defaultDistance) : 0.4))}">
             </div>
             <div class="form-group" style="flex:1;">
-              <label class="form-label">${cardioMode === "time" ? "Время (мин)" : "Дистанция (км)"}</label>
-              <input type="number" step="${cardioMode === "time" ? 1 : 0.1}" id="edit-cardio-target-val" class="form-input" value="${cardioMode === "time" ? (exercise.targetMinutes || 20) : (exercise.defaultDistance || 0.4)}">
+              <label class="form-label">Единица измерения</label>
+              ${cardioMode === "time" ? `
+                <select id="edit-cardio-time-unit" class="form-select">
+                  <option value="min" ${timeUnit === "min" ? "selected" : ""}>Минуты (мин)</option>
+                  <option value="sec" ${timeUnit === "sec" ? "selected" : ""}>Секунды (сек)</option>
+                  <option value="hour" ${timeUnit === "hour" ? "selected" : ""}>Часы (час)</option>
+                </select>
+              ` : `
+                <select id="edit-cardio-dist-unit" class="form-select">
+                  <option value="km" ${distUnit === "km" ? "selected" : ""}>Километры (км)</option>
+                  <option value="m" ${distUnit === "m" ? "selected" : ""}>Метры (м)</option>
+                </select>
+              `}
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Отдых между отрезками (сек)</label>
-            <input type="number" id="edit-ex-rest" class="form-input" value="${exercise.restSeconds !== undefined ? exercise.restSeconds : 120}" step="15">
-          </div>
+          ${paramMeta.step > 0 ? `
+            <div class="form-row">
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">${paramMeta.name} (${paramMeta.unit || "Lvl"})</label>
+                <input type="number" id="edit-cardio-param" class="form-input" value="${exercise[paramMeta.prop] !== undefined ? exercise[paramMeta.prop] : paramMeta.defaultVal}" step="${paramMeta.step}" min="${paramMeta.min}" max="${paramMeta.max}">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Отдых между отрезками (сек)</label>
+                <input type="number" id="edit-ex-rest" class="form-input" value="${exercise.restSeconds !== undefined ? exercise.restSeconds : 120}" step="15">
+              </div>
+            </div>
+          ` : `
+            <div class="form-group">
+              <label class="form-label">Отдых между отрезками (сек)</label>
+              <input type="number" id="edit-ex-rest" class="form-input" value="${exercise.restSeconds !== undefined ? exercise.restSeconds : 120}" step="15">
+            </div>
+          `}
         ` : `
           <div class="form-row">
             <div class="form-group" style="flex:1;">
@@ -260,8 +293,24 @@ function openEditExerciseModal(exercise, onSave) {
       });
     }
 
+    const distUnitSelect = modal.querySelector("#edit-cardio-dist-unit");
+    if (distUnitSelect) {
+      distUnitSelect.addEventListener("change", (e) => {
+        distUnit = e.target.value;
+        renderEditForm();
+      });
+    }
+
+    const timeUnitSelect = modal.querySelector("#edit-cardio-time-unit");
+    if (timeUnitSelect) {
+      timeUnitSelect.addEventListener("change", (e) => {
+        timeUnit = e.target.value;
+        renderEditForm();
+      });
+    }
+
     modal.querySelector("#edit-save-btn").addEventListener("click", () => {
-      const prevWasCardio = Boolean(exercise.isCardio || exercise.category === "Бег" || exercise.category === "Эллипс" || exercise.category === "Вело");
+      const prevWasCardio = Boolean(exercise.isCardio || exercise.category === "Бег" || exercise.category === "Эллипс" || exercise.category === "Вело" || exercise.category === "Кардио");
       exercise.name = modal.querySelector("#edit-ex-name").value.trim() || exercise.name;
       exercise.youtubeUrl = modal.querySelector("#edit-ex-youtube").value.trim();
       exercise.tip = modal.querySelector("#edit-ex-tip").value.trim();
@@ -271,40 +320,86 @@ function openEditExerciseModal(exercise, onSave) {
       if (isCardio) {
         exercise.cardioType = cardioType;
         exercise.cardioMode = cardioMode;
+        exercise.distUnit = distUnit;
+        exercise.timeUnit = timeUnit;
+
+        const paramEl = modal.querySelector("#edit-cardio-param");
+        const paramVal = paramEl ? parseFloat(paramEl.value) : paramMeta.defaultVal;
+
         if (cardioType === "bike") {
-          const paramEl = modal.querySelector("#edit-cardio-param");
-          exercise.bikeLevel = paramEl ? (parseInt(paramEl.value, 10) || 5) : 5;
+          exercise.bikeLevel = Math.round(paramVal) || 5;
           exercise.category = "Вело";
           exercise.equip = "Велотренажер";
         } else if (cardioType === "ellipse") {
-          const paramEl = modal.querySelector("#edit-cardio-param");
-          exercise.resistanceLevel = paramEl ? (parseInt(paramEl.value, 10) || 5) : 5;
+          exercise.resistanceLevel = Math.round(paramVal) || 5;
           exercise.category = "Эллипс";
           exercise.equip = "Эллипс";
+        } else if (cardioType === "rower") {
+          exercise.rowerLevel = Math.round(paramVal) || 5;
+          exercise.category = "Кардио";
+          exercise.equip = "Гребной тренажер";
+        } else if (cardioType === "stepper") {
+          exercise.stepperLevel = Math.round(paramVal) || 5;
+          exercise.category = "Кардио";
+          exercise.equip = "Степпер";
+        } else if (cardioType === "outdoor") {
+          exercise.incline = 0;
+          exercise.category = "Бег";
+          exercise.equip = "Улица / Манеж";
         } else {
-          const paramEl = modal.querySelector("#edit-cardio-param");
-          exercise.incline = paramEl ? (parseFloat(paramEl.value) || 0) : 1;
+          exercise.incline = paramVal || 0;
           exercise.category = "Бег";
           exercise.equip = "Дорожка";
         }
 
+        const targetValEl = modal.querySelector("#edit-cardio-target-val");
+        const rawTargetVal = targetValEl ? parseFloat(targetValEl.value) : (cardioMode === "time" ? 20 : 0.4);
+
         if (cardioMode === "time") {
-          const targetValEl = modal.querySelector("#edit-cardio-target-val");
-          exercise.targetMinutes = targetValEl ? (parseInt(targetValEl.value, 10) || 20) : 20;
-          exercise.targetReps = `${exercise.targetMinutes} мин`;
+          if (timeUnit === "sec") {
+            exercise.targetSeconds = Math.round(rawTargetVal) || 60;
+            exercise.targetReps = `${exercise.targetSeconds} сек`;
+          } else if (timeUnit === "hour") {
+            exercise.targetHours = rawTargetVal || 0.5;
+            exercise.targetReps = `${exercise.targetHours} ч`;
+          } else {
+            exercise.targetMinutes = Math.round(rawTargetVal) || 20;
+            exercise.targetReps = `${exercise.targetMinutes} мин`;
+          }
         } else {
-          const targetValEl = modal.querySelector("#edit-cardio-target-val");
-          exercise.defaultDistance = targetValEl ? (parseFloat(targetValEl.value) || 0.4) : 0.4;
-          exercise.defaultPace = exercise.targetReps || "04:20";
+          if (distUnit === "m") {
+            exercise.defaultDistance = Math.round(rawTargetVal) || 400;
+            exercise.targetReps = `${exercise.defaultDistance} м`;
+          } else {
+            exercise.defaultDistance = Math.round(rawTargetVal * 100) / 100 || 0.4;
+            exercise.targetReps = `${exercise.defaultDistance} км`;
+          }
+          exercise.defaultPace = "04:20";
         }
 
-        if (!prevWasCardio && exercise.sets) {
+        // Синхронизация подходов
+        if (exercise.sets) {
           exercise.sets.forEach((s) => {
-            s.distance = s.distance || exercise.defaultDistance || 0.4;
-            s.time = s.time || (cardioMode === "time" ? `${exercise.targetMinutes || 20} мин` : "04:20");
-            s.minutes = exercise.targetMinutes || 20;
-            s.incline = exercise.incline != null ? exercise.incline : 1;
-            s.level = exercise.resistanceLevel != null ? exercise.resistanceLevel : 5;
+            if (cardioMode === "time") {
+              if (timeUnit === "sec") {
+                s.seconds = exercise.targetSeconds || 60;
+                s.time = `${s.seconds} сек`;
+              } else if (timeUnit === "hour") {
+                s.hours = exercise.targetHours || 0.5;
+                s.time = `${s.hours} ч`;
+              } else {
+                s.minutes = exercise.targetMinutes || 20;
+                s.time = `${s.minutes} мин`;
+              }
+            } else {
+              s.distance = exercise.defaultDistance || (distUnit === "m" ? 400 : 0.4);
+              if (timeUnit === "sec") s.time = "90";
+              else if (timeUnit === "hour") s.time = "0.5";
+              else s.time = "04:20";
+            }
+            if (paramMeta.prop === "incline") s.incline = exercise.incline;
+            else s[paramMeta.prop] = exercise[paramMeta.prop];
+            s.level = exercise[paramMeta.prop];
           });
         }
       } else {
@@ -312,12 +407,12 @@ function openEditExerciseModal(exercise, onSave) {
         exercise.targetReps = repsEl ? repsEl.value.trim() : (exercise.targetReps || "8-10");
         const weightEl = modal.querySelector("#edit-ex-weight");
         exercise.defaultWeight = weightEl ? (parseFloat(weightEl.value) || 20) : 20;
-        if (exercise.category === "Бег" || exercise.category === "Эллипс" || exercise.category === "Вело") exercise.category = "Свое";
+        if (exercise.category === "Бег" || exercise.category === "Эллипс" || exercise.category === "Вело" || exercise.category === "Кардио") exercise.category = "Свое";
 
         if (prevWasCardio && exercise.sets) {
           exercise.sets.forEach((s) => {
             s.weight = s.weight || exercise.defaultWeight;
-            s.reps = s.reps || parseInt(exercise.targetReps) || 8;
+            s.reps = s.reps || parseInt(exercise.targetReps, 10) || 8;
           });
         }
       }
