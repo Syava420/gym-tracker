@@ -24,7 +24,7 @@ function renderStrengthSetRow(row, set, setIndex, ex, workout, isTimed, onSaveSe
       <button type="button" class="btn-step btn-dec-r">-</button>
       <input type="number" class="step-input input-reps" value="${set.reps}" min="1">
       <button type="button" class="btn-step btn-inc-r">+</button>
-      ${isTimed ? `<button type="button" class="btn-open-hang-timer" title="Запустить секундомер виса"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M10 2h4"/></svg></button>` : ""}
+      <button type="button" class="btn-open-hang-timer ${isTimed ? "timed-accent" : ""}" title="Запустить секундомер удержания/виса"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M10 2h4"/></svg></button>
     </div>
 
     <div class="set-check-cell">
@@ -48,7 +48,7 @@ function renderStrengthSetRow(row, set, setIndex, ex, workout, isTimed, onSaveSe
   };
   updatePeakHighlight();
 
-  // Таймер статики/виса
+  // Таймер статики/виса/удержания
   const hangBtn = row.querySelector(".btn-open-hang-timer");
   if (hangBtn) {
     hangBtn.addEventListener("click", () => {
@@ -65,6 +65,7 @@ function renderStrengthSetRow(row, set, setIndex, ex, workout, isTimed, onSaveSe
           if (!sessionStartTime && onStartTimer) {
             onStartTimer(Date.now());
           }
+          if (options.onStartSessionTimer) options.onStartSessionTimer(Date.now());
           if (options.onUpdateTopNav) options.onUpdateTopNav();
           onSaveSession();
           if (ex.restSeconds > 0) onTriggerRest(ex.restSeconds);
@@ -123,6 +124,9 @@ function renderStrengthSetRow(row, set, setIndex, ex, workout, isTimed, onSaveSe
       set.completedAt = Date.now();
       if (!sessionStartTime && onStartTimer) {
         onStartTimer(Date.now());
+      }
+      if (options.onStartSessionTimer) {
+        options.onStartSessionTimer(Date.now());
       }
       if (set.weight > 0 && (!exPR || !exPR.weight || set.weight > exPR.weight)) {
         window.StorageModule.saveCustomPR(ex.id || ex.name.toLowerCase().trim(), {

@@ -239,7 +239,8 @@ function renderHomeView(container, onStartWorkout, onResumeWorkout, onCancelWork
   `;
 
   listSection.querySelector("#btn-add-routine").addEventListener("click", () => {
-    window.ModalsModule.openProgramModal(null, (newRoutine) => {
+    const openBuilder = (window.ProgramBuilderModal && window.ProgramBuilderModal.openProgramBuilderModal) || window.ModalsModule.openProgramModal;
+    openBuilder(null, (newRoutine) => {
       routines.push(newRoutine);
       window.StorageModule.saveWorkoutRoutines(routines);
       renderHomeView(container, onStartWorkout);
@@ -259,7 +260,8 @@ function renderHomeView(container, onStartWorkout, onResumeWorkout, onCancelWork
     const emptyBtn = cardsContainer.querySelector("#btn-empty-create");
     if (emptyBtn) {
       emptyBtn.addEventListener("click", () => {
-        window.ModalsModule.openProgramModal(null, (newRoutine) => {
+        const openBuilder = (window.ProgramBuilderModal && window.ProgramBuilderModal.openProgramBuilderModal) || window.ModalsModule.openProgramModal;
+        openBuilder(null, (newRoutine) => {
           routines.push(newRoutine);
           window.StorageModule.saveWorkoutRoutines(routines);
           renderHomeView(container, onStartWorkout);
@@ -296,7 +298,8 @@ function renderHomeView(container, onStartWorkout, onResumeWorkout, onCancelWork
 
       card.querySelector(".btn-edit-prog").addEventListener("click", (e) => {
         e.stopPropagation();
-        window.ModalsModule.openProgramModal(item, (updated) => {
+        const openBuilder = (window.ProgramBuilderModal && window.ProgramBuilderModal.openProgramBuilderModal) || window.ModalsModule.openProgramModal;
+        openBuilder(item, (updated) => {
           const idx = routines.findIndex((r) => r.id === item.id);
           if (idx !== -1) routines[idx] = updated;
           window.StorageModule.saveWorkoutRoutines(routines);

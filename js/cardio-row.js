@@ -244,6 +244,7 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
           if (!sessionStartTime && onStartTimer) {
             onStartTimer(Date.now());
           }
+          if (options.onStartSessionTimer) options.onStartSessionTimer(Date.now());
           if (onUpdateTopNav) onUpdateTopNav();
           onSaveSession();
           if (ex.restSeconds > 0) onTriggerRest(ex.restSeconds);
@@ -261,6 +262,7 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
         const enteredDist = parseFloat(inputDistFact.value);
         if (!isNaN(enteredDist)) set.distance = enteredDist;
         if (!sessionStartTime && onStartTimer) onStartTimer(Date.now());
+        if (options.onStartSessionTimer) options.onStartSessionTimer(Date.now());
       } else {
         delete set.completedAt;
       }
@@ -462,6 +464,7 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
           if (!sessionStartTime && onStartTimer) {
             onStartTimer(Date.now());
           }
+          if (options.onStartSessionTimer) options.onStartSessionTimer(Date.now());
           if (onUpdateTopNav) onUpdateTopNav();
           onSaveSession();
           if (ex.restSeconds > 0) onTriggerRest(ex.restSeconds);
@@ -476,6 +479,7 @@ function renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTr
       if (set.completed) {
         set.completedAt = Date.now();
         if (!sessionStartTime && onStartTimer) onStartTimer(Date.now());
+        if (options.onStartSessionTimer) options.onStartSessionTimer(Date.now());
       } else {
         delete set.completedAt;
       }

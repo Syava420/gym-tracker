@@ -1401,11 +1401,11 @@ input[type="number"] {
   appearance: textfield !important;
 }
 
-/* Кнопка запуска таймера виса прямо в сете */
+/* Кнопка запуска таймера виса / статики прямо в сете */
 .btn-open-hang-timer {
-  background: #1e293b;
-  border: 1px solid #38bdf8;
-  color: #38bdf8;
+  background: #181818;
+  border: 1px solid #2e2e2e;
+  color: #888888;
   font-size: 12px;
   font-weight: 800;
   width: 26px;
@@ -1416,6 +1416,19 @@ input[type="number"] {
   justify-content: center;
   cursor: pointer;
   margin-left: 2px;
+  transition: all 0.15s ease;
+}
+
+.btn-open-hang-timer:hover {
+  background: #252525;
+  color: #ffffff;
+  border-color: #444444;
+}
+
+.btn-open-hang-timer.timed-accent {
+  background: #1e293b;
+  border-color: #38bdf8;
+  color: #38bdf8;
 }
 
 .btn-open-hang-timer:active {
@@ -1926,6 +1939,89 @@ input[type="number"] {
   align-items: center;
   justify-content: center;
   margin-left: 8px;
+}
+
+/* Конструктор тренировок */
+.pbm-exercises-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pbm-ex-item {
+  background: #161616;
+  border: 1px solid #242424;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.pbm-ex-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pbm-ex-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pbm-ex-meta {
+  font-size: 11px;
+  color: var(--text-gray);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pbm-ex-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.btn-pbm-tool {
+  background: #202020;
+  border: 1px solid #333333;
+  color: #cccccc;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-pbm-tool:hover {
+  background: #2c2c2c;
+  color: #ffffff;
+}
+
+.btn-pbm-del {
+  color: #f87171;
+  border-color: #3f1d1d;
+}
+
+.btn-pbm-del:hover {
+  background: #2d1818;
+  color: #ef4444;
+}
+
+.empty-builder-box {
+  background: #141414;
+  border: 1px dashed #282828;
+  border-radius: 8px;
+  padding: 20px 12px;
+  text-align: center;
 }
 
 /* Формы */

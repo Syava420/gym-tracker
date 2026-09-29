@@ -142,8 +142,12 @@ function addTimerSeconds(extra = 30) {
 function formatTime(seconds) {
   const sec = parseInt(seconds, 10);
   if (isNaN(sec) || sec <= 0) return "0:00";
-  const m = Math.floor(sec / 60);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
   const s = sec % 60;
+  if (h > 0) {
+    return `${h}:${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${s}`;
+  }
   return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 

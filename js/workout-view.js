@@ -44,6 +44,8 @@ function renderWorkoutView(container, options) {
   const topNav = document.createElement("div");
   topNav.className = "workout-topbar";
 
+  let currentStartTime = sessionStartTime || workout.startTime || null;
+
   const updateTopNav = () => {
     let currentDone = 0;
     (workout.exercises || []).forEach((e) => {
@@ -51,9 +53,9 @@ function renderWorkoutView(container, options) {
         if (s.completed) currentDone++;
       });
     });
-    const isRunning = Boolean(sessionStartTime || currentDone > 0);
+    const isRunning = Boolean(currentStartTime || currentDone > 0);
     const stopwatchEl = topNav.querySelector("#workout-stopwatch");
-    if (stopwatchEl && !sessionStartTime) {
+    if (stopwatchEl && !currentStartTime) {
       stopwatchEl.textContent = "—";
     }
 
@@ -100,6 +102,8 @@ function renderWorkoutView(container, options) {
         startBtn.textContent = "Старт";
         startBtn.addEventListener("click", () => {
           const now = Date.now();
+          currentStartTime = now;
+          workout.startTime = now;
           if (onStartTimer) onStartTimer(now);
           updateTopNav();
         });
@@ -114,7 +118,7 @@ function renderWorkoutView(container, options) {
     </div>
     <div class="workout-header-center">
       <div class="workout-header-title">${workout.title}</div>
-      <div class="workout-header-timer" id="workout-stopwatch">${sessionStartTime ? "00:00" : "—"}</div>
+      <div class="workout-header-timer" id="workout-stopwatch">${currentStartTime ? "00:00" : "—"}</div>
     </div>
     <div class="workout-topbar-right"></div>
   `;
@@ -213,7 +217,7 @@ function renderWorkoutView(container, options) {
 
       <div class="ex-target-info">
         ${isCardio 
-          ? `${ex.sets.length} отрезка • Цель: ${ex.targetReps || (ex.defaultDistance ? (ex.distUnit === 'm' ? ex.defaultDistance + ' м' : ex.defaultDistance + ' км') : "Кардио")} • ${paramBadge}${ex.targetSpeed ? `⚡ ${ex.targetSpeed} • ` : ""}Отдых ${window.TimerModule.formatTime(ex.restSeconds || 0)}`
+          ? `${ex.sets.length} отрезка • Цель: ${ex.targetReps || (ex.defaultDistance ? (ex.distUnit === 'm' ? ex.defaultDistance + ' м' : ex.defaultDistance + ' км') : "Кардио")} • ${paramBadge}${ex.targetSpeed ? `<span class="cardio-intensity-badge">Темп: ${ex.targetSpeed}</span> • ` : ""}Отдых ${window.TimerModule.formatTime(ex.restSeconds || 0)}`
           : `${ex.sets.length} подх. по ${ex.targetReps || "10-12"} • Отдых ${window.TimerModule.formatTime(ex.restSeconds != null ? ex.restSeconds : 60)} ${isTimed ? '• <span class="timed-badge">На время</span>' : ""}`
         }
         ${isCardio ? ' • <span class="run-badge">Кардио</span>' : ""}
@@ -235,7 +239,9 @@ function renderWorkoutView(container, options) {
           <span class="sh-param-col">${cardioParamCol}</span>
         ` : `
           <span class="sh-weight">КГ</span>
-          <span class="sh-reps">${isTimed ? "СЕК" : "ПОВТ"}</span>
+          <button type="button" class="sh-col-btn sh-toggle-strength-mode" id="th-toggle-strength-${exIndex}" title="Нажми, чтобы переключить: Повторения / Время (сек)">
+            ${isTimed ? "СЕК (СТАТИКА)" : "ПОВТОРЕНИЯ"} <span class="th-swap-icon">⇄</span>
+          </button>
         `}
         <span class="sh-check">ГОТОВО</span>
         <span class="sh-del"></span>
@@ -273,6 +279,28 @@ function renderWorkoutView(container, options) {
             window.CardioHelper.cycleDistanceUnit(ex);
           } else {
             window.CardioHelper.cycleTimeUnit(ex);
+          }
+          syncToTemplate();
+          onSaveSession();
+          onRerender();
+        });
+      }
+    }
+
+    if (!isCardio) {
+      const btnStrengthMode = card.querySelector(`#th-toggle-strength-${exIndex}`);
+      if (btnStrengthMode) {
+        btnStrengthMode.addEventListener("click", (e) => {
+          e.stopPropagation();
+          ex.isTimed = !Boolean(isTimed);
+          if (ex.isTimed) {
+            if (!ex.targetReps || !String(ex.targetReps).includes("сек")) {
+              ex.targetReps = "40 сек";
+            }
+          } else {
+            if (ex.targetReps && String(ex.targetReps).includes("сек")) {
+              ex.targetReps = "8-10";
+            }
           }
           syncToTemplate();
           onSaveSession();
@@ -444,15 +472,35 @@ function renderWorkoutView(container, options) {
         if (window.CardioHelper) {
           window.CardioHelper.renderCardioSetRow(
             row, set, setIndex, ex, workout,
-            onSaveSession, onTriggerRest, onRerender, onStartTimer, sessionStartTime,
-            { syncToTemplate, onFinish, onUpdateTopNav: updateTopNav }
+            onSaveSession, onTriggerRest, onRerender, onStartTimer, currentStartTime,
+            {
+              syncToTemplate,
+              onFinish,
+              onUpdateTopNav: updateTopNav,
+              onStartSessionTimer: (now) => {
+                currentStartTime = now;
+                workout.startTime = now;
+                if (onStartTimer) onStartTimer(now);
+                updateTopNav();
+              }
+            }
           );
         }
       } else {
         renderStrengthSetRow(
           row, set, setIndex, ex, workout, isTimed,
-          onSaveSession, onTriggerRest, onRerender, onStartTimer, sessionStartTime,
-          { syncToTemplate, onFinish, onUpdateTopNav: updateTopNav }
+          onSaveSession, onTriggerRest, onRerender, onStartTimer, currentStartTime,
+          {
+            syncToTemplate,
+            onFinish,
+            onUpdateTopNav: updateTopNav,
+            onStartSessionTimer: (now) => {
+              currentStartTime = now;
+              workout.startTime = now;
+              if (onStartTimer) onStartTimer(now);
+              updateTopNav();
+            }
+          }
         );
       }
 

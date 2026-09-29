@@ -149,6 +149,24 @@ function openEditExerciseModal(exercise, onSave) {
   function renderEditForm() {
     const paramMeta = window.CardioHelper ? window.CardioHelper.getCardioParamMeta({ cardioType }) : { name: "Уклон", unit: "%", step: 0.5, defaultVal: 1, prop: "incline", min: 0, max: 20 };
 
+    let totalRestSec = exercise.restSeconds != null ? exercise.restSeconds : 120;
+    let restUnit = "sec";
+    let restDisplayVal = totalRestSec;
+    let restDisplayStep = 15;
+    if (totalRestSec >= 3600 && totalRestSec % 3600 === 0) {
+      restUnit = "hour";
+      restDisplayVal = totalRestSec / 3600;
+      restDisplayStep = 0.5;
+    } else if (totalRestSec >= 60 && totalRestSec % 60 === 0) {
+      restUnit = "min";
+      restDisplayVal = totalRestSec / 60;
+      restDisplayStep = 0.5;
+    } else if (totalRestSec >= 60) {
+      restUnit = "min";
+      restDisplayVal = Math.round((totalRestSec / 60) * 10) / 10;
+      restDisplayStep = 0.5;
+    }
+
     modal.innerHTML = `
       <div class="modal-card">
         <div class="modal-header">
@@ -225,8 +243,9 @@ function openEditExerciseModal(exercise, onSave) {
 
           <div class="form-row">
             <div class="form-group" style="flex:1;">
-              <label class="form-label">Интенсивность (Скорость или Темп)</label>
-              <input type="text" id="edit-cardio-speed" class="form-input" placeholder="например: 14.0 км/ч или 04:15 мин/км" value="${exercise.targetSpeed || ""}">
+              <label class="form-label">Целевой темп или скорость (интенсивность)</label>
+              <input type="text" id="edit-cardio-speed" class="form-input" placeholder="например: 04:20 мин/км или 12.0 км/ч" value="${exercise.targetSpeed || ""}">
+              <div style="font-size: 10px; color: #777; margin-top: 3px;">Отображается как бейдж «Темп: ...». Не меняет время в подходах.</div>
             </div>
           </div>
 
@@ -237,31 +256,61 @@ function openEditExerciseModal(exercise, onSave) {
                 <input type="number" id="edit-cardio-param" class="form-input" value="${exercise[paramMeta.prop] !== undefined ? exercise[paramMeta.prop] : paramMeta.defaultVal}" step="${paramMeta.step}" min="${paramMeta.min}" max="${paramMeta.max}">
               </div>
               <div class="form-group" style="flex:1;">
-                <label class="form-label">Отдых между отрезками (сек)</label>
-                <input type="number" id="edit-ex-rest" class="form-input" value="${exercise.restSeconds !== undefined ? exercise.restSeconds : 120}" step="15">
+                <label class="form-label">Отдых между отрезками</label>
+                <div style="display: flex; gap: 6px;">
+                  <input type="number" id="edit-ex-rest-val" class="form-input" style="flex: 1;" value="${restDisplayVal}" min="0" step="${restDisplayStep}">
+                  <select id="edit-ex-rest-unit" class="form-select" style="width: 80px;">
+                    <option value="sec" ${restUnit === "sec" ? "selected" : ""}>сек</option>
+                    <option value="min" ${restUnit === "min" ? "selected" : ""}>мин</option>
+                    <option value="hour" ${restUnit === "hour" ? "selected" : ""}>час</option>
+                  </select>
+                </div>
               </div>
             </div>
           ` : `
             <div class="form-group">
-              <label class="form-label">Отдых между отрезками (сек)</label>
-              <input type="number" id="edit-ex-rest" class="form-input" value="${exercise.restSeconds !== undefined ? exercise.restSeconds : 120}" step="15">
+              <label class="form-label">Отдых между отрезками</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="number" id="edit-ex-rest-val" class="form-input" style="flex: 1;" value="${restDisplayVal}" min="0" step="${restDisplayStep}">
+                <select id="edit-ex-rest-unit" class="form-select" style="width: 80px;">
+                  <option value="sec" ${restUnit === "sec" ? "selected" : ""}>сек</option>
+                  <option value="min" ${restUnit === "min" ? "selected" : ""}>мин</option>
+                  <option value="hour" ${restUnit === "hour" ? "selected" : ""}>час</option>
+                </select>
+              </div>
             </div>
           `}
         ` : `
           <div class="form-row">
             <div class="form-group" style="flex:1;">
-              <label class="form-label">Целевые повторения</label>
-              <input type="text" id="edit-ex-reps" class="form-input" value="${(!exercise.targetReps || /(км|м|сек|мин)/i.test(exercise.targetReps)) ? "8-10" : exercise.targetReps}">
+              <label class="form-label">Тип нагрузки</label>
+              <select id="edit-strength-mode" class="form-select">
+                <option value="reps" ${!exercise.isTimed ? "selected" : ""}>Повторения (повт)</option>
+                <option value="timed" ${exercise.isTimed ? "selected" : ""}>Статика / Удержание (сек)</option>
+              </select>
             </div>
             <div class="form-group" style="flex:1;">
-              <label class="form-label">Отдых (сек)</label>
-              <input type="number" id="edit-ex-rest" class="form-input" value="${exercise.restSeconds !== undefined ? exercise.restSeconds : 120}" step="15">
+              <label class="form-label">Целевой объем</label>
+              <input type="text" id="edit-ex-reps" class="form-input" value="${exercise.targetReps || (exercise.isTimed ? '40 сек' : '8-10')}">
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Рабочий вес по умолчанию (кг)</label>
-            <input type="number" id="edit-ex-weight" class="form-input" value="${exercise.defaultWeight || 20}">
+          <div class="form-row">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Рабочий вес (кг)</label>
+              <input type="number" id="edit-ex-weight" class="form-input" value="${exercise.defaultWeight || 20}">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Отдых между подходами</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="number" id="edit-ex-rest-val" class="form-input" style="flex: 1;" value="${restDisplayVal}" min="0" step="${restDisplayStep}">
+                <select id="edit-ex-rest-unit" class="form-select" style="width: 80px;">
+                  <option value="sec" ${restUnit === "sec" ? "selected" : ""}>сек</option>
+                  <option value="min" ${restUnit === "min" ? "selected" : ""}>мин</option>
+                  <option value="hour" ${restUnit === "hour" ? "selected" : ""}>час</option>
+                </select>
+              </div>
+            </div>
           </div>
         `}
 
@@ -329,7 +378,20 @@ function openEditExerciseModal(exercise, onSave) {
       exercise.name = modal.querySelector("#edit-ex-name").value.trim() || exercise.name;
       exercise.youtubeUrl = modal.querySelector("#edit-ex-youtube").value.trim();
       exercise.tip = modal.querySelector("#edit-ex-tip").value.trim();
-      exercise.restSeconds = parseInt(modal.querySelector("#edit-ex-rest").value, 10) || 0;
+
+      // Расчет отдыха с учетом выбранной единицы (сек/мин/час)
+      const restValEl = modal.querySelector("#edit-ex-rest-val");
+      const restUnitEl = modal.querySelector("#edit-ex-rest-unit");
+      const rVal = parseFloat(restValEl ? restValEl.value : 0) || 0;
+      const rUnit = restUnitEl ? restUnitEl.value : "sec";
+      if (rUnit === "hour") {
+        exercise.restSeconds = Math.round(rVal * 3600);
+      } else if (rUnit === "min") {
+        exercise.restSeconds = Math.round(rVal * 60);
+      } else {
+        exercise.restSeconds = Math.round(rVal);
+      }
+
       exercise.isCardio = isCardio;
 
       if (isCardio) {
@@ -392,32 +454,24 @@ function openEditExerciseModal(exercise, onSave) {
             exercise.defaultDistance = Math.round(rawTargetVal * 100) / 100 || 0.4;
             exercise.targetReps = `${exercise.defaultDistance} км`;
           }
-          exercise.defaultPace = "04:20";
         }
 
-        // Синхронизация подходов
+        // Сохраняем индивидуально заданные пользователем дистанции и время!
+        // Ни в коем случае не стираем введенные вручную 600м, 400м или время отрезка!
         if (exercise.sets) {
           exercise.sets.forEach((s) => {
-            if (cardioMode === "time") {
-              if (timeUnit === "sec") {
-                s.seconds = exercise.targetSeconds || 60;
-                s.time = `${s.seconds} сек`;
-              } else if (timeUnit === "hour") {
-                s.hours = exercise.targetHours || 0.5;
-                s.time = `${s.hours} ч`;
-              } else {
-                s.minutes = exercise.targetMinutes || 20;
-                s.time = `${s.minutes} мин`;
-              }
-            } else {
+            if (s.distance === undefined || s.distance === null || s.distance === "") {
               s.distance = exercise.defaultDistance || (distUnit === "m" ? 400 : 0.4);
-              if (timeUnit === "sec") s.time = "90";
-              else if (timeUnit === "hour") s.time = "0.5";
-              else s.time = "04:20";
             }
-            if (paramMeta.prop === "incline") s.incline = exercise.incline;
-            else s[paramMeta.prop] = exercise[paramMeta.prop];
-            s.level = exercise[paramMeta.prop];
+            if (s.time === undefined || s.time === null || s.time === "") {
+              if (cardioMode === "time") {
+                s.time = timeUnit === "sec" ? `${exercise.targetSeconds || 60} сек` : (timeUnit === "hour" ? `${exercise.targetHours || 0.5} ч` : `${exercise.targetMinutes || 20} мин`);
+              }
+            }
+            if (paramMeta) {
+              if (s[paramMeta.prop] === undefined) s[paramMeta.prop] = paramVal;
+              if (s.level === undefined) s.level = paramVal;
+            }
           });
         }
       } else {
@@ -440,9 +494,14 @@ function openEditExerciseModal(exercise, onSave) {
         delete exercise.rowerLevel;
         delete exercise.stepperLevel;
 
+        const strengthModeEl = modal.querySelector("#edit-strength-mode");
+        if (strengthModeEl) {
+          exercise.isTimed = (strengthModeEl.value === "timed");
+        }
+
         const repsEl = modal.querySelector("#edit-ex-reps");
         let rawReps = repsEl ? repsEl.value.trim() : "";
-        if (!rawReps || /(км|м|сек|мин)/i.test(rawReps)) rawReps = "8-10";
+        if (!rawReps || /(км|м)/i.test(rawReps)) rawReps = exercise.isTimed ? "40 сек" : "8-10";
         exercise.targetReps = rawReps;
 
         const weightEl = modal.querySelector("#edit-ex-weight");
@@ -477,84 +536,9 @@ function openEditExerciseModal(exercise, onSave) {
 }
 
 function openProgramModal(existingRoutine, onSave, defaultFolder) {
-  let modal = document.getElementById("program-edit-modal");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "program-edit-modal";
-    modal.className = "modal-overlay";
-    document.body.appendChild(modal);
+  if (window.ProgramBuilderModal && window.ProgramBuilderModal.openProgramBuilderModal) {
+    return window.ProgramBuilderModal.openProgramBuilderModal(existingRoutine, onSave, defaultFolder);
   }
-
-  const isEdit = Boolean(existingRoutine);
-  const folders = window.StorageModule.getProgramFolders() || [];
-  const targetFolder = isEdit
-    ? existingRoutine.folder
-    : (defaultFolder || (folders[0] || "Все"));
-
-  modal.innerHTML = `
-    <div class="modal-card">
-      <div class="modal-header">
-        <span class="modal-title">${isEdit ? "Изменить программу" : "Новая тренировка"}</span>
-        <button type="button" class="modal-close" id="prog-close-btn">✕</button>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Название программы (например, «Верх А» или «Спина + Бицепс»)</label>
-        <input type="text" id="prog-name" class="form-input" value="${isEdit ? existingRoutine.title : ""}" placeholder="Название...">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Описание / Мышечные группы</label>
-        <input type="text" id="prog-sub" class="form-input" value="${isEdit ? existingRoutine.subtitle : ""}" placeholder="Например: Грудь, трицепс">
-      </div>
-
-      <div class="form-row">
-        <div class="form-group" style="flex:1;">
-          <label class="form-label">Тег дня (ПН, ВТ...)</label>
-          <input type="text" id="prog-tag" class="form-input" value="${isEdit ? existingRoutine.tag : "ПН"}" maxlength="4">
-        </div>
-        <div class="form-group" style="flex:2;">
-          <label class="form-label">Папка программы</label>
-          <select id="prog-folder" class="form-select">
-            ${folders.map((f) => `
-              <option value="${f}" ${targetFolder === f ? "selected" : ""}>${f}</option>
-            `).join("")}
-          </select>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" id="prog-save-btn" class="btn-primary-full">
-          ${isEdit ? "Сохранить изменения" : "Создать тренировку"}
-        </button>
-      </div>
-    </div>
-  `;
-
-  modal.classList.add("visible");
-  modal.querySelector("#prog-close-btn").addEventListener("click", () => modal.classList.remove("visible"));
-  modal.querySelector("#prog-save-btn").addEventListener("click", () => {
-    const title = modal.querySelector("#prog-name").value.trim();
-    if (!title) {
-      alert("Укажите название программы!");
-      return;
-    }
-    const subtitle = modal.querySelector("#prog-sub").value.trim() || "Тренировка";
-    const tag = modal.querySelector("#prog-tag").value.trim() || "ТР";
-    const folder = modal.querySelector("#prog-folder").value;
-
-    const result = {
-      id: isEdit ? existingRoutine.id : "routine_" + Date.now(),
-      title,
-      subtitle,
-      tag: tag.toUpperCase(),
-      folder,
-      exercises: isEdit ? existingRoutine.exercises : []
-    };
-
-    modal.classList.remove("visible");
-    onSave(result, isEdit);
-  });
 }
 
 function openAddFolderModal(onSave) {
