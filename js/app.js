@@ -6,6 +6,9 @@ let sessionStartTime = null;
 let workoutStopwatchInterval = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (window.StorageModule && window.StorageModule.checkCleanSlate) {
+    window.StorageModule.checkCleanSlate();
+  }
   initDOM();
   checkExistingSession();
   render();

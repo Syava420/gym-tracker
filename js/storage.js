@@ -40,19 +40,19 @@ function getProgramFolders() {
     const raw = localStorage.getItem(STORAGE_KEYS.FOLDERS);
     let folders = raw ? JSON.parse(raw) : null;
     if (!folders || !Array.isArray(folders)) {
-      folders = ["Все", "Сплит Hyper-Mass", "Бег 3 км", "Мои программы"];
+      folders = ["Все"];
       localStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(folders));
     } else {
       if (!folders.includes("Все")) folders.unshift("Все");
     }
     
     const settings = getAppSettings();
-    if (settings.showAllFolder === false) {
+    if (settings.showAllFolder === false && folders.length > 1) {
       folders = folders.filter((f) => f !== "Все");
     }
     return folders;
   } catch (e) {
-    return ["Все", "Сплит Hyper-Mass"];
+    return ["Все"];
   }
 }
 
@@ -168,13 +168,13 @@ function getWorkoutRoutines() {
     const raw = localStorage.getItem(STORAGE_KEYS.ROUTINES);
     let routines = raw ? JSON.parse(raw) : null;
     if (!routines || !Array.isArray(routines)) {
-      routines = (window.DEFAULT_WORKOUTS || []).slice();
+      routines = [];
       saveWorkoutRoutines(routines);
       return routines;
     }
     return routines;
   } catch (e) {
-    return window.DEFAULT_WORKOUTS || [];
+    return [];
   }
 }
 
@@ -603,6 +603,54 @@ function updateRoutineExercises(routineId, exercises) {
   }
 }
 
+/**
+ * Очистить все тренировки (сделать список абсолютно пустым)
+ */
+function clearAllWorkouts() {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ROUTINES, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(["Все"]));
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION);
+    return true;
+  } catch (e) {
+    console.error("Ошибка очистки тренировок:", e);
+    return false;
+  }
+}
+
+/**
+ * Полный сброс приложения (очистить тренировки, историю и рекорды)
+ */
+function clearEverything() {
+  try {
+    const settings = getAppSettings();
+    localStorage.clear();
+    saveAppSettings(settings);
+    localStorage.setItem(STORAGE_KEYS.ROUTINES, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(["Все"]));
+    localStorage.setItem("gym_clean_slate_v1", "true");
+    return true;
+  } catch (e) {
+    console.error("Ошибка полного сброса:", e);
+    return false;
+  }
+}
+
+/**
+ * Проверка чистого старта: если в памяти остались демо-тренировки, автоматически очищаем
+ */
+function checkCleanSlate() {
+  try {
+    if (!localStorage.getItem("gym_clean_slate_v1")) {
+      localStorage.setItem("gym_clean_slate_v1", "true");
+      const rawRoutines = localStorage.getItem(STORAGE_KEYS.ROUTINES);
+      if (rawRoutines && (rawRoutines.includes("upper_a") || rawRoutines.includes("Сплит Hyper-Mass") || rawRoutines.includes("cardio_5k"))) {
+        clearAllWorkouts();
+      }
+    }
+  } catch (e) {}
+}
+
 window.StorageModule = {
   getAppSettings,
   saveAppSettings,
@@ -631,5 +679,8 @@ window.StorageModule = {
   saveActiveSession,
   clearActiveSession,
   exportAllData,
-  importAllData
+  importAllData,
+  clearAllWorkouts,
+  clearEverything,
+  checkCleanSlate
 };

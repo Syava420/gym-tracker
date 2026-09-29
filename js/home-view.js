@@ -249,7 +249,23 @@ function renderHomeView(container, onStartWorkout, onResumeWorkout, onCancelWork
   const cardsContainer = listSection.querySelector("#workout-cards-list");
 
   if (filteredRoutines.length === 0) {
-    cardsContainer.innerHTML = `<div class="empty-hint">В этой папке пока нет тренировок. Нажми «+ Новая тренировка» выше.</div>`;
+    cardsContainer.innerHTML = `
+      <div class="empty-state-box">
+        <div class="empty-state-title">Тренировок пока нет</div>
+        <div class="empty-state-desc">Создай свою первую тренировку с упражнениями</div>
+        <button type="button" class="btn-empty-add" id="btn-empty-create">+ Создать тренировку</button>
+      </div>
+    `;
+    const emptyBtn = cardsContainer.querySelector("#btn-empty-create");
+    if (emptyBtn) {
+      emptyBtn.addEventListener("click", () => {
+        window.ModalsModule.openProgramModal(null, (newRoutine) => {
+          routines.push(newRoutine);
+          window.StorageModule.saveWorkoutRoutines(routines);
+          renderHomeView(container, onStartWorkout);
+        }, selectedProgramFolder);
+      });
+    }
   } else {
     filteredRoutines.forEach((item) => {
       const isRunWorkout = Boolean(item.isRun || item.folder === "Бег 3 км");

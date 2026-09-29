@@ -258,9 +258,12 @@ function renderSettingsView(container) {
         <button type="button" class="btn-secondary-dark" id="btn-import-json">Загрузить JSON</button>
         <input type="file" id="backup-file-input" accept=".json" style="display:none;">
       </div>
-      <div style="margin-top: 10px;">
-        <button type="button" class="btn-danger-dark full-width" id="btn-reset-defaults">
-          Сбросить программы до стандартных
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <button type="button" class="btn-secondary-dark full-width" id="btn-clear-workouts" style="color: #ffaa55; border-color: #443322;">
+          Очистить тренировки (с чистого листа)
+        </button>
+        <button type="button" class="btn-danger-dark full-width" id="btn-reset-everything" style="color: #ff5555; border-color: #441a1a;">
+          Полный сброс приложения (стереть всё)
         </button>
       </div>
     </div>
@@ -383,13 +386,21 @@ function renderSettingsView(container) {
     reader.readAsText(file);
   });
 
-  // Сброс до стандартных
-  wrapper.querySelector("#btn-reset-defaults").addEventListener("click", () => {
-    if (confirm("Вернуть стандартные программы?\nИстория выполненных тренировок сохранится.")) {
-      localStorage.removeItem("gym_tracker_custom_routines");
-      localStorage.removeItem("gym_tracker_custom_folders");
-      alert("Стандартные программы восстановлены!");
+  // Очистить тренировки (с чистого листа)
+  wrapper.querySelector("#btn-clear-workouts").addEventListener("click", () => {
+    if (confirm("Удалить все созданные тренировки и папки?\nПриложение станет полностью пустым (история выполненных тренировок сохранится).")) {
+      window.StorageModule.clearAllWorkouts();
+      alert("Тренировки удалены! Список теперь пуст.");
       renderSettingsView(container);
+    }
+  });
+
+  // Полный сброс приложения
+  wrapper.querySelector("#btn-reset-everything").addEventListener("click", () => {
+    if (confirm("ВНИМАНИЕ: Стереть ВСЕ данные (тренировки, историю и рекорды)?\nПриложение будет сброшено до нуля.")) {
+      window.StorageModule.clearEverything();
+      alert("Приложение полностью очищено!");
+      window.location.reload();
     }
   });
 
