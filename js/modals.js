@@ -159,8 +159,8 @@ function openEditExerciseModal(exercise, onSave) {
         <div class="form-group">
           <label class="form-label">Тип упражнения (колонки в карточке)</label>
           <div class="type-switch-box">
-            <button type="button" class="type-pill ${!isCardio ? "active" : ""}" id="type-strength-btn">Силовое (Кг × Повт)</button>
-            <button type="button" class="type-pill ${isCardio ? "active" : ""}" id="type-cardio-btn">Бег / Кардио (Таймер / Км)</button>
+            <button type="button" class="type-pill ${!isCardio ? "active" : ""}" id="type-strength-btn">Силовые</button>
+            <button type="button" class="type-pill ${isCardio ? "active" : ""}" id="type-cardio-btn">Кардио</button>
           </div>
         </div>
 
@@ -195,8 +195,8 @@ function openEditExerciseModal(exercise, onSave) {
             <div class="form-group" style="flex:1;">
               <label class="form-label">Режим кардио</label>
               <select id="edit-cardio-mode" class="form-select">
-                <option value="distance" ${cardioMode === "distance" ? "selected" : ""}>По дистанции</option>
-                <option value="time" ${cardioMode === "time" ? "selected" : ""}>По времени</option>
+                <option value="distance" ${cardioMode === "distance" ? "selected" : ""}>По дистанции (отрезки)</option>
+                <option value="time" ${cardioMode === "time" ? "selected" : ""}>На время (свободный результат)</option>
               </select>
             </div>
           </div>
@@ -223,6 +223,13 @@ function openEditExerciseModal(exercise, onSave) {
             </div>
           </div>
 
+          <div class="form-row">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Интенсивность (Скорость или Темп)</label>
+              <input type="text" id="edit-cardio-speed" class="form-input" placeholder="например: 14.0 км/ч или 04:15 мин/км" value="${exercise.targetSpeed || ""}">
+            </div>
+          </div>
+
           ${paramMeta.step > 0 ? `
             <div class="form-row">
               <div class="form-group" style="flex:1;">
@@ -244,7 +251,7 @@ function openEditExerciseModal(exercise, onSave) {
           <div class="form-row">
             <div class="form-group" style="flex:1;">
               <label class="form-label">Целевые повторения</label>
-              <input type="text" id="edit-ex-reps" class="form-input" value="${exercise.targetReps || "8-10"}">
+              <input type="text" id="edit-ex-reps" class="form-input" value="${(!exercise.targetReps || /(км|м|сек|мин)/i.test(exercise.targetReps)) ? "8-10" : exercise.targetReps}">
             </div>
             <div class="form-group" style="flex:1;">
               <label class="form-label">Отдых (сек)</label>
@@ -269,11 +276,19 @@ function openEditExerciseModal(exercise, onSave) {
 
     modal.querySelector("#type-strength-btn").addEventListener("click", () => {
       isCardio = false;
+      exercise.isCardio = false;
+      if (exercise.targetReps && /(км|м|сек|мин)/i.test(exercise.targetReps)) {
+        exercise.targetReps = "8-10";
+      }
       renderEditForm();
     });
 
     modal.querySelector("#type-cardio-btn").addEventListener("click", () => {
       isCardio = true;
+      exercise.isCardio = true;
+      if (!exercise.targetReps || !/(км|м|сек|мин)/i.test(exercise.targetReps)) {
+        exercise.targetReps = distUnit === "m" ? "400 м" : "0.4 км";
+      }
       renderEditForm();
     });
 
@@ -322,6 +337,9 @@ function openEditExerciseModal(exercise, onSave) {
         exercise.cardioMode = cardioMode;
         exercise.distUnit = distUnit;
         exercise.timeUnit = timeUnit;
+
+        const speedEl = modal.querySelector("#edit-cardio-speed");
+        exercise.targetSpeed = speedEl ? speedEl.value.trim() : "";
 
         const paramEl = modal.querySelector("#edit-cardio-param");
         const paramVal = paramEl ? parseFloat(paramEl.value) : paramMeta.defaultVal;
@@ -403,16 +421,49 @@ function openEditExerciseModal(exercise, onSave) {
           });
         }
       } else {
+        exercise.isCardio = false;
+        exercise.category = "Силовые";
+        exercise.equip = "Снаряд";
+        delete exercise.cardioType;
+        delete exercise.cardioMode;
+        delete exercise.distUnit;
+        delete exercise.timeUnit;
+        delete exercise.defaultDistance;
+        delete exercise.defaultPace;
+        delete exercise.targetSpeed;
+        delete exercise.targetMinutes;
+        delete exercise.targetSeconds;
+        delete exercise.targetHours;
+        delete exercise.incline;
+        delete exercise.bikeLevel;
+        delete exercise.resistanceLevel;
+        delete exercise.rowerLevel;
+        delete exercise.stepperLevel;
+
         const repsEl = modal.querySelector("#edit-ex-reps");
-        exercise.targetReps = repsEl ? repsEl.value.trim() : (exercise.targetReps || "8-10");
+        let rawReps = repsEl ? repsEl.value.trim() : "";
+        if (!rawReps || /(км|м|сек|мин)/i.test(rawReps)) rawReps = "8-10";
+        exercise.targetReps = rawReps;
+
         const weightEl = modal.querySelector("#edit-ex-weight");
         exercise.defaultWeight = weightEl ? (parseFloat(weightEl.value) || 20) : 20;
-        if (exercise.category === "Бег" || exercise.category === "Эллипс" || exercise.category === "Вело" || exercise.category === "Кардио") exercise.category = "Свое";
 
-        if (prevWasCardio && exercise.sets) {
-          exercise.sets.forEach((s) => {
-            s.weight = s.weight || exercise.defaultWeight;
-            s.reps = s.reps || parseInt(exercise.targetReps, 10) || 8;
+        if (exercise.sets) {
+          exercise.sets.forEach((s, idx) => {
+            s.setNumber = idx + 1;
+            s.weight = s.weight !== undefined && !isNaN(parseFloat(s.weight)) ? parseFloat(s.weight) : (exercise.defaultWeight || 20);
+            s.reps = s.reps !== undefined && !isNaN(parseInt(s.reps, 10)) ? parseInt(s.reps, 10) : (parseInt(exercise.targetReps, 10) || 8);
+            delete s.distance;
+            delete s.time;
+            delete s.minutes;
+            delete s.seconds;
+            delete s.hours;
+            delete s.incline;
+            delete s.level;
+            delete s.bikeLevel;
+            delete s.resistanceLevel;
+            delete s.rowerLevel;
+            delete s.stepperLevel;
           });
         }
       }

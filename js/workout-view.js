@@ -43,34 +43,88 @@ function renderWorkoutView(container, options) {
   // 1. Верхняя панель тренировки
   const topNav = document.createElement("div");
   topNav.className = "workout-topbar";
+
+  const updateTopNav = () => {
+    let currentDone = 0;
+    (workout.exercises || []).forEach((e) => {
+      (e.sets || []).forEach((s) => {
+        if (s.completed) currentDone++;
+      });
+    });
+    const isRunning = Boolean(sessionStartTime || currentDone > 0);
+    const stopwatchEl = topNav.querySelector("#workout-stopwatch");
+    if (stopwatchEl && !sessionStartTime) {
+      stopwatchEl.textContent = "—";
+    }
+
+    const leftBox = topNav.querySelector(".workout-topbar-left");
+    if (leftBox) {
+      let cancelBtn = leftBox.querySelector("#btn-cancel-workout");
+      if (isRunning && !cancelBtn) {
+        cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "btn-cancel-mini";
+        cancelBtn.id = "btn-cancel-workout";
+        cancelBtn.title = "Сбросить тренировку";
+        cancelBtn.textContent = "Сброс";
+        cancelBtn.addEventListener("click", () => {
+          if (confirm(`Сбросить и отменить тренировку «${workout.title}»? Данные не сохранятся.`)) {
+            if (onCancel) onCancel();
+          }
+        });
+        leftBox.appendChild(cancelBtn);
+      } else if (!isRunning && cancelBtn) {
+        cancelBtn.remove();
+      }
+    }
+
+    const rightBox = topNav.querySelector(".workout-topbar-right");
+    if (rightBox) {
+      rightBox.innerHTML = "";
+      if (isRunning) {
+        const finishBtn = document.createElement("button");
+        finishBtn.type = "button";
+        finishBtn.className = "btn-finish-minimal";
+        finishBtn.id = "btn-finish-workout";
+        finishBtn.textContent = "Завершить";
+        finishBtn.addEventListener("click", () => {
+          syncToTemplate();
+          onFinish();
+        });
+        rightBox.appendChild(finishBtn);
+      } else {
+        const startBtn = document.createElement("button");
+        startBtn.type = "button";
+        startBtn.className = "btn-start-minimal";
+        startBtn.id = "btn-start-workout";
+        startBtn.textContent = "Старт";
+        startBtn.addEventListener("click", () => {
+          const now = Date.now();
+          if (onStartTimer) onStartTimer(now);
+          updateTopNav();
+        });
+        rightBox.appendChild(startBtn);
+      }
+    }
+  };
+
   topNav.innerHTML = `
     <div class="workout-topbar-left">
       <button type="button" class="btn-back-text" id="btn-back-workout">← Выход</button>
-      ${hasStarted ? `<button type="button" class="btn-cancel-mini" id="btn-cancel-workout" title="Сбросить тренировку">Сброс</button>` : ""}
     </div>
     <div class="workout-header-center">
       <div class="workout-header-title">${workout.title}</div>
       <div class="workout-header-timer" id="workout-stopwatch">${sessionStartTime ? "00:00" : "—"}</div>
     </div>
-    ${canFinish ? `<button type="button" class="btn-finish-minimal" id="btn-finish-workout">Завершить</button>` : `<div style="width: 72px;"></div>`}
+    <div class="workout-topbar-right"></div>
   `;
 
-  topNav.querySelector("#btn-back-workout").addEventListener("click", onBack);
-  const cancelBtn = topNav.querySelector("#btn-cancel-workout");
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
-      if (confirm(`Сбросить и отменить тренировку «${workout.title}»? Данные не сохранятся.`)) {
-        if (onCancel) onCancel();
-      }
-    });
-  }
-  const finishBtn = topNav.querySelector("#btn-finish-workout");
-  if (finishBtn) {
-    finishBtn.addEventListener("click", () => {
-      syncToTemplate();
-      onFinish();
-    });
-  }
+  topNav.querySelector("#btn-back-workout").addEventListener("click", () => {
+    syncToTemplate();
+    onSaveSession();
+    onBack();
+  });
+  updateTopNav();
   container.appendChild(topNav);
 
   // Баннер, если все подходы выполнены
@@ -128,18 +182,16 @@ function renderWorkoutView(container, options) {
         }
       }
 
+      const dUnitShort = dUnit === "m" ? "М" : "КМ";
+      const tUnitShort = tUnit === "sec" ? "С" : (tUnit === "hour" ? "Ч" : "М");
       if (ex.cardioMode === "time") {
-        const tUnitShort = tUnit === "sec" ? "С" : (tUnit === "hour" ? "Ч" : "М");
         cardioWeightCol = `ВРЕМЯ (${tUnitShort})`;
-        cardioRepsCol = paramMeta ? paramMeta.shortName : "УКЛОН";
-        isMainToggleable = true;
-        isSubToggleable = false;
+        cardioRepsCol = `ФАКТ (${dUnitShort})`;
+        cardioParamCol = paramMeta ? paramMeta.shortName : "УКЛОН";
       } else {
-        cardioWeightCol = dUnit === "m" ? "ДИСТ (М)" : "ДИСТ (КМ)";
-        const tUnitShort = tUnit === "sec" ? "ВРЕМЯ (С)" : (tUnit === "hour" ? "ВРЕМЯ (Ч)" : "ТЕМП / ВР");
-        cardioRepsCol = tUnitShort;
-        isMainToggleable = true;
-        isSubToggleable = true;
+        cardioWeightCol = `ДИСТ (${dUnitShort})`;
+        cardioRepsCol = `ВРЕМЯ (${tUnitShort})`;
+        cardioParamCol = paramMeta ? paramMeta.shortName : "УКЛОН";
       }
     }
 
@@ -161,7 +213,7 @@ function renderWorkoutView(container, options) {
 
       <div class="ex-target-info">
         ${isCardio 
-          ? `${ex.sets.length} отрезка • Цель: ${ex.targetReps || (ex.defaultDistance ? (ex.distUnit === 'm' ? ex.defaultDistance + ' м' : ex.defaultDistance + ' км') : "Кардио")} • ${paramBadge}Отдых ${window.TimerModule.formatTime(ex.restSeconds || 0)}`
+          ? `${ex.sets.length} отрезка • Цель: ${ex.targetReps || (ex.defaultDistance ? (ex.distUnit === 'm' ? ex.defaultDistance + ' м' : ex.defaultDistance + ' км') : "Кардио")} • ${paramBadge}${ex.targetSpeed ? `⚡ ${ex.targetSpeed} • ` : ""}Отдых ${window.TimerModule.formatTime(ex.restSeconds || 0)}`
           : `${ex.sets.length} подх. по ${ex.targetReps || "10-12"} • Отдых ${window.TimerModule.formatTime(ex.restSeconds != null ? ex.restSeconds : 60)} ${isTimed ? '• <span class="timed-badge">На время</span>' : ""}`
         }
         ${isCardio ? ' • <span class="run-badge">Кардио</span>' : ""}
@@ -177,13 +229,10 @@ function renderWorkoutView(container, options) {
           <button type="button" class="sh-col-btn sh-col-toggle-main" id="th-toggle-main-${exIndex}" title="Нажми, чтобы переключить единицы">
             ${cardioWeightCol} <span class="th-swap-icon">⇄</span>
           </button>
-          ${isSubToggleable ? `
-            <button type="button" class="sh-col-btn sh-col-toggle-sub" id="th-toggle-sub-${exIndex}" title="Нажми, чтобы переключить сек / мин / час">
-              ${cardioRepsCol} <span class="th-swap-icon">⇄</span>
-            </button>
-          ` : `
-            <span class="sh-reps">${cardioRepsCol}</span>
-          `}
+          <button type="button" class="sh-col-btn sh-col-toggle-sub" id="th-toggle-sub-${exIndex}" title="Нажми, чтобы переключить единицы">
+            ${cardioRepsCol} <span class="th-swap-icon">⇄</span>
+          </button>
+          <span class="sh-param-col">${cardioParamCol}</span>
         ` : `
           <span class="sh-weight">КГ</span>
           <span class="sh-reps">${isTimed ? "СЕК" : "ПОВТ"}</span>
@@ -220,7 +269,11 @@ function renderWorkoutView(container, options) {
       if (btnSub) {
         btnSub.addEventListener("click", (e) => {
           e.stopPropagation();
-          window.CardioHelper.cycleTimeUnit(ex);
+          if (ex.cardioMode === "time") {
+            window.CardioHelper.cycleDistanceUnit(ex);
+          } else {
+            window.CardioHelper.cycleTimeUnit(ex);
+          }
           syncToTemplate();
           onSaveSession();
           onRerender();
@@ -376,6 +429,7 @@ function renderWorkoutView(container, options) {
           prevInfo: null
         });
       }
+      syncToTemplate();
       onSaveSession();
       onRerender();
     });
@@ -387,13 +441,19 @@ function renderWorkoutView(container, options) {
       row.className = `set-item-row ${set.completed ? "done" : ""}`;
 
       if (isCardio) {
-        // Беговой / Кардио подход через CardioHelper
         if (window.CardioHelper) {
-          window.CardioHelper.renderCardioSetRow(row, set, setIndex, ex, workout, onSaveSession, onTriggerRest, onRerender, onStartTimer, sessionStartTime);
+          window.CardioHelper.renderCardioSetRow(
+            row, set, setIndex, ex, workout,
+            onSaveSession, onTriggerRest, onRerender, onStartTimer, sessionStartTime,
+            { syncToTemplate, onFinish, onUpdateTopNav: updateTopNav }
+          );
         }
       } else {
-        // Силовой подход
-        renderStrengthSetRow(row, set, setIndex, ex, workout, isTimed, onSaveSession, onTriggerRest, onRerender, onStartTimer, sessionStartTime);
+        renderStrengthSetRow(
+          row, set, setIndex, ex, workout, isTimed,
+          onSaveSession, onTriggerRest, onRerender, onStartTimer, sessionStartTime,
+          { syncToTemplate, onFinish, onUpdateTopNav: updateTopNav }
+        );
       }
 
       rowsContainer.appendChild(row);
@@ -476,152 +536,11 @@ function renderWorkoutView(container, options) {
   container.appendChild(addExBox);
 }
 
-// Рендер силового подхода
-function renderStrengthSetRow(row, set, setIndex, ex, workout, isTimed, onSaveSession, onTriggerRest, onRerender, onStartTimer, sessionStartTime) {
-  row.innerHTML = `
-    <div class="set-num-cell">
-      <span class="set-index-badge">${set.setNumber}</span>
-    </div>
-    <div class="set-prev-cell">${set.prevInfo || "—"}</div>
-    
-    <div class="set-stepper-cell">
-      <button type="button" class="btn-step btn-dec-w">-</button>
-      <input type="number" class="step-input input-weight" value="${set.weight}" step="${ex.defaultWeight >= 40 ? 2.5 : 1}">
-      <button type="button" class="btn-step btn-inc-w">+</button>
-    </div>
-
-    <div class="set-stepper-cell">
-      <button type="button" class="btn-step btn-dec-r">-</button>
-      <input type="number" class="step-input input-reps" value="${set.reps}" min="1">
-      <button type="button" class="btn-step btn-inc-r">+</button>
-      ${isTimed ? `<button type="button" class="btn-open-hang-timer" title="Запустить секундомер виса"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M10 2h4"/></svg></button>` : ""}
-    </div>
-
-    <div class="set-check-cell">
-      <button type="button" class="btn-complete-set ${set.completed ? "active" : ""}">✓</button>
-    </div>
-
-    <div class="set-del-cell">
-      <button type="button" class="btn-del-set-btn" title="Удалить подход">✕</button>
-    </div>
-  `;
-
-  const inputW = row.querySelector(".input-weight");
-  const inputR = row.querySelector(".input-reps");
-  const btnCheck = row.querySelector(".btn-complete-set");
-  const weightStep = ex.defaultWeight >= 40 ? 2.5 : 1;
-  const exPR = window.StorageModule.getExercisePR(ex.id, ex.name);
-
-  const updatePeakHighlight = () => {
-    const isPeak = exPR && exPR.weight > 0 && set.weight >= exPR.weight;
-    inputW.classList.toggle("peak-weight-highlight", Boolean(isPeak));
-  };
-  updatePeakHighlight();
-
-  // Таймер статики/виса
-  const hangBtn = row.querySelector(".btn-open-hang-timer");
-  if (hangBtn) {
-    hangBtn.addEventListener("click", () => {
-      const targetSec = parseInt(inputR.value) || parseInt(ex.targetReps) || 40;
-      window.StopwatchModal.openStaticTimerModal({
-        title: ex.name,
-        targetSeconds: targetSec,
-        onSaveTime: (finalSec) => {
-          set.reps = finalSec;
-          inputR.value = finalSec;
-          set.completed = true;
-          btnCheck.classList.add("active");
-          row.classList.add("done");
-          if (!sessionStartTime && onStartTimer) {
-            onStartTimer(Date.now());
-          }
-          onSaveSession();
-          if (ex.restSeconds > 0) onTriggerRest(ex.restSeconds);
-        }
-      });
-    });
+// Рендер силового подхода через модуль strength-row.js
+function renderStrengthSetRow(...args) {
+  if (window.StrengthRow && window.StrengthRow.renderStrengthSetRow) {
+    return window.StrengthRow.renderStrengthSetRow(...args);
   }
-
-  row.querySelector(".btn-dec-w").addEventListener("click", (e) => {
-    e.stopPropagation();
-    set.weight = Math.max(0, Math.round((set.weight - weightStep) * 10) / 10);
-    inputW.value = set.weight;
-    updatePeakHighlight();
-    onSaveSession();
-  });
-
-  row.querySelector(".btn-inc-w").addEventListener("click", (e) => {
-    e.stopPropagation();
-    set.weight = Math.round((set.weight + weightStep) * 10) / 10;
-    inputW.value = set.weight;
-    updatePeakHighlight();
-    onSaveSession();
-  });
-
-  inputW.addEventListener("change", () => {
-    const val = parseFloat(inputW.value);
-    set.weight = isNaN(val) ? 0 : val;
-    updatePeakHighlight();
-    onSaveSession();
-  });
-
-  row.querySelector(".btn-dec-r").addEventListener("click", (e) => {
-    e.stopPropagation();
-    set.reps = Math.max(1, set.reps - 1);
-    inputR.value = set.reps;
-    onSaveSession();
-  });
-
-  row.querySelector(".btn-inc-r").addEventListener("click", (e) => {
-    e.stopPropagation();
-    set.reps += 1;
-    inputR.value = set.reps;
-    onSaveSession();
-  });
-
-  inputR.addEventListener("change", () => {
-    const val = parseInt(inputR.value);
-    set.reps = isNaN(val) ? 1 : val;
-    onSaveSession();
-  });
-
-  btnCheck.addEventListener("click", (e) => {
-    e.stopPropagation();
-    set.completed = !set.completed;
-    if (set.completed) {
-      set.completedAt = Date.now();
-      // Первый выполненный подход официально запускает тренировку
-      if (!sessionStartTime && onStartTimer) {
-        onStartTimer(Date.now());
-      }
-      if (set.weight > 0 && (!exPR || !exPR.weight || set.weight > exPR.weight)) {
-        window.StorageModule.saveCustomPR(ex.id || ex.name.toLowerCase().trim(), {
-          name: ex.name,
-          weight: set.weight,
-          reps: set.reps,
-          updatedAt: new Date().toISOString()
-        });
-        updatePeakHighlight();
-      }
-    } else {
-      delete set.completedAt;
-    }
-    btnCheck.classList.toggle("active", set.completed);
-    row.classList.toggle("done", set.completed);
-    onSaveSession();
-
-    if (set.completed && ex.restSeconds > 0) {
-      onTriggerRest(ex.restSeconds);
-    }
-  });
-
-  row.querySelector(".btn-del-set-btn").addEventListener("click", (e) => {
-    e.stopPropagation();
-    ex.sets.splice(setIndex, 1);
-    ex.sets.forEach((s, idx) => { s.setNumber = idx + 1; });
-    onSaveSession();
-    onRerender();
-  });
 }
 
 window.WorkoutView = {

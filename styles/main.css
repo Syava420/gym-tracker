@@ -657,6 +657,35 @@ body {
   color: #ffffff;
 }
 
+.btn-start-minimal {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-start-minimal:hover {
+  background: #e5e5e5;
+  border-color: #e5e5e5;
+}
+
+.cardio-intensity-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #34d399;
+  background: #0d261e;
+  border: 1px solid #059669;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
 /* КАРТОЧКА УПРАЖНЕНИЯ: ЕДИНЫЙ ТЕМНЫЙ ФОН #131313 */
 .ex-card {
   background: var(--bg-card);
@@ -1221,6 +1250,14 @@ body {
 .sh-reps { flex: 1; text-align: center; }
 .sh-check { width: 36px; text-align: center; }
 .sh-del { width: 28px; text-align: right; }
+.sh-param-col {
+  width: 58px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-dark-gray);
+  text-transform: uppercase;
+}
 
 /* Интерактивные кнопки переключения единиц прямо в шапке таблицы */
 .sh-col-btn {
@@ -1338,6 +1375,18 @@ body {
   padding: 0;
   -moz-appearance: textfield;
   user-select: text;
+}
+
+.cardio-fact-dist-cell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.input-distance-fact {
+  width: 44px;
 }
 
 /* Полностью убираем белые стрелочки/спиннеры у ВСЕХ number-инпутов в приложении */

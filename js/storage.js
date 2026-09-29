@@ -420,34 +420,6 @@ function clearActiveSession() {
 }
 
 /**
- * Экспорт всех данных в JSON
- */
-function exportAllData() {
-  return JSON.stringify({
-    routines: getWorkoutRoutines(),
-    folders: getProgramFolders(),
-    history: getWorkoutHistory(),
-    exportedAt: new Date().toISOString()
-  }, null, 2);
-}
-
-/**
- * Импорт всех данных из JSON
- */
-function importAllData(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    if (data.routines) saveWorkoutRoutines(data.routines);
-    if (data.folders) saveProgramFolders(data.folders);
-    if (data.history) localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(data.history));
-    return true;
-  } catch (e) {
-    console.error("Ошибка импорта:", e);
-    return false;
-  }
-}
-
-/**
  * Получить список ТОЛЬКО реальных рекордов пользователя
  */
 function getAllUserPRs() {
@@ -582,17 +554,54 @@ function updateRoutineExercises(routineId, exercises) {
     const routines = getWorkoutRoutines();
     const routine = routines.find((r) => r.id === routineId);
     if (routine) {
-      routine.exercises = (exercises || []).map((ex) => ({
-        id: ex.id || "ex_" + Date.now(),
-        name: ex.name,
-        category: ex.category || "Силовые",
-        equip: ex.equip || "Снаряд",
-        targetReps: ex.targetReps || "8-10",
-        defaultWeight: ex.sets && ex.sets[0] && ex.sets[0].weight !== undefined ? ex.sets[0].weight : (ex.defaultWeight || 20),
-        setsCount: ex.sets ? ex.sets.length : (ex.setsCount || 3),
-        isCardio: Boolean(ex.isCardio),
-        tip: ex.tip || ""
-      }));
+      routine.exercises = (exercises || []).map((ex) => {
+        const cleanedSets = (ex.sets || []).map((s, idx) => ({
+          setNumber: idx + 1,
+          weight: s.weight !== undefined ? s.weight : (ex.defaultWeight || 20),
+          reps: s.reps !== undefined ? s.reps : (parseInt(ex.targetReps, 10) || 8),
+          distance: s.distance,
+          time: s.time,
+          minutes: s.minutes,
+          seconds: s.seconds,
+          hours: s.hours,
+          incline: s.incline,
+          bikeLevel: s.bikeLevel,
+          resistanceLevel: s.resistanceLevel,
+          rowerLevel: s.rowerLevel,
+          stepperLevel: s.stepperLevel,
+          completed: false
+        }));
+        return {
+          id: ex.id || "ex_" + Date.now(),
+          name: ex.name,
+          category: ex.category || (ex.isCardio ? "Бег" : "Силовые"),
+          equip: ex.equip || (ex.isCardio ? "Дорожка" : "Снаряд"),
+          targetReps: ex.targetReps || (ex.isCardio ? "400 м" : "8-10"),
+          defaultWeight: ex.sets && ex.sets[0] && ex.sets[0].weight !== undefined ? ex.sets[0].weight : (ex.defaultWeight || 20),
+          defaultDistance: ex.defaultDistance,
+          defaultPace: ex.defaultPace,
+          targetSpeed: ex.targetSpeed,
+          targetPace: ex.targetPace,
+          targetMinutes: ex.targetMinutes,
+          targetSeconds: ex.targetSeconds,
+          targetHours: ex.targetHours,
+          cardioType: ex.cardioType,
+          cardioMode: ex.cardioMode,
+          distUnit: ex.distUnit,
+          timeUnit: ex.timeUnit,
+          incline: ex.incline,
+          bikeLevel: ex.bikeLevel,
+          resistanceLevel: ex.resistanceLevel,
+          rowerLevel: ex.rowerLevel,
+          stepperLevel: ex.stepperLevel,
+          restSeconds: ex.restSeconds !== undefined ? ex.restSeconds : (ex.isCardio ? 120 : 90),
+          setsCount: cleanedSets.length,
+          sets: cleanedSets,
+          isCardio: Boolean(ex.isCardio),
+          tip: ex.tip || "",
+          youtubeUrl: ex.youtubeUrl || ""
+        };
+      });
       saveWorkoutRoutines(routines);
       return true;
     }
@@ -601,54 +610,6 @@ function updateRoutineExercises(routineId, exercises) {
     console.error("Ошибка синхронизации упражнений программы:", e);
     return false;
   }
-}
-
-/**
- * Очистить все тренировки (сделать список абсолютно пустым)
- */
-function clearAllWorkouts() {
-  try {
-    localStorage.setItem(STORAGE_KEYS.ROUTINES, JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(["Все"]));
-    localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION);
-    return true;
-  } catch (e) {
-    console.error("Ошибка очистки тренировок:", e);
-    return false;
-  }
-}
-
-/**
- * Полный сброс приложения (очистить тренировки, историю и рекорды)
- */
-function clearEverything() {
-  try {
-    const settings = getAppSettings();
-    localStorage.clear();
-    saveAppSettings(settings);
-    localStorage.setItem(STORAGE_KEYS.ROUTINES, JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(["Все"]));
-    localStorage.setItem("gym_clean_slate_v1", "true");
-    return true;
-  } catch (e) {
-    console.error("Ошибка полного сброса:", e);
-    return false;
-  }
-}
-
-/**
- * Проверка чистого старта: если в памяти остались демо-тренировки, автоматически очищаем
- */
-function checkCleanSlate() {
-  try {
-    if (!localStorage.getItem("gym_clean_slate_v1")) {
-      localStorage.setItem("gym_clean_slate_v1", "true");
-      const rawRoutines = localStorage.getItem(STORAGE_KEYS.ROUTINES);
-      if (rawRoutines && (rawRoutines.includes("upper_a") || rawRoutines.includes("Сплит Hyper-Mass") || rawRoutines.includes("cardio_5k"))) {
-        clearAllWorkouts();
-      }
-    }
-  } catch (e) {}
 }
 
 window.StorageModule = {
@@ -677,10 +638,5 @@ window.StorageModule = {
   purgeEmptyWorkouts,
   getActiveSession,
   saveActiveSession,
-  clearActiveSession,
-  exportAllData,
-  importAllData,
-  clearAllWorkouts,
-  clearEverything,
-  checkCleanSlate
+  clearActiveSession
 };

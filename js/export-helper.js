@@ -299,8 +299,85 @@ function openManualWorkoutModal(dateKey, onSaved) {
   }
 }
 
+// Экспорт / импорт и очистка данных хранилища
+function exportAllData() {
+  return JSON.stringify({
+    routines: window.StorageModule.getWorkoutRoutines(),
+    folders: window.StorageModule.getProgramFolders(),
+    history: window.StorageModule.getWorkoutHistory(),
+    exportedAt: new Date().toISOString()
+  }, null, 2);
+}
+
+function importAllData(jsonString) {
+  try {
+    const data = JSON.parse(jsonString);
+    if (data.routines) window.StorageModule.saveWorkoutRoutines(data.routines);
+    if (data.folders) window.StorageModule.saveProgramFolders(data.folders);
+    if (data.history) localStorage.setItem("gym_tracker_history", JSON.stringify(data.history));
+    return true;
+  } catch (e) {
+    console.error("Ошибка импорта:", e);
+    return false;
+  }
+}
+
+function clearAllWorkouts() {
+  try {
+    localStorage.setItem("gym_tracker_custom_routines", JSON.stringify([]));
+    localStorage.setItem("gym_tracker_custom_folders", JSON.stringify(["Все"]));
+    localStorage.removeItem("gym_tracker_active_session");
+    return true;
+  } catch (e) {
+    console.error("Ошибка очистки тренировок:", e);
+    return false;
+  }
+}
+
+function clearEverything() {
+  try {
+    const settings = window.StorageModule.getAppSettings();
+    localStorage.clear();
+    window.StorageModule.saveAppSettings(settings);
+    localStorage.setItem("gym_tracker_custom_routines", JSON.stringify([]));
+    localStorage.setItem("gym_tracker_custom_folders", JSON.stringify(["Все"]));
+    localStorage.setItem("gym_clean_slate_v1", "true");
+    return true;
+  } catch (e) {
+    console.error("Ошибка полного сброса:", e);
+    return false;
+  }
+}
+
+function checkCleanSlate() {
+  try {
+    if (!localStorage.getItem("gym_clean_slate_v1")) {
+      localStorage.setItem("gym_clean_slate_v1", "true");
+      const rawRoutines = localStorage.getItem("gym_tracker_custom_routines");
+      if (rawRoutines && (rawRoutines.includes("upper_a") || rawRoutines.includes("Сплит Hyper-Mass") || rawRoutines.includes("cardio_5k"))) {
+        clearAllWorkouts();
+      }
+    }
+  } catch (e) {
+    console.error("Ошибка проверки чистого старта:", e);
+  }
+}
+
+if (window.StorageModule) {
+  window.StorageModule.exportAllData = exportAllData;
+  window.StorageModule.importAllData = importAllData;
+  window.StorageModule.clearAllWorkouts = clearAllWorkouts;
+  window.StorageModule.clearEverything = clearEverything;
+  window.StorageModule.checkCleanSlate = checkCleanSlate;
+}
+
 window.ExportHelper = {
   generateTextDiary,
   openTextExportModal,
-  openManualWorkoutModal
+  openManualWorkoutModal,
+  exportAllData,
+  importAllData,
+  clearAllWorkouts,
+  clearEverything,
+  checkCleanSlate
 };

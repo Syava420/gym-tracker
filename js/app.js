@@ -168,13 +168,19 @@ function updateStopwatchDisplay() {
 // СТАРТ И ФИНИШ ТРЕНИРОВКИ
 // ----------------------------------------------------
 function startNewWorkout(routineData) {
+  // Если эта тренировка уже открыта — просто переходим к ней, сохраняя все изменения
+  if (activeWorkout && activeWorkout.templateId === routineData.id) {
+    switchView("workout");
+    return;
+  }
+
   activeWorkout = {
     templateId: routineData.id,
     title: routineData.title,
     subtitle: routineData.subtitle,
     isRun: Boolean(routineData.isRun || routineData.folder === "Бег 3 км"),
     exercises: (routineData.exercises || []).map((ex) => {
-      const isCardio = Boolean(ex.isCardio || ex.category === "Бег" || ex.category === "Эллипс");
+      const isCardio = window.CardioHelper ? window.CardioHelper.isCardioExercise(ex) : Boolean(ex.isCardio || ex.category === "Бег" || ex.category === "Эллипс");
       const lastSets = window.StorageModule.getLastPerformance(ex.id, ex.name);
       const isBodyweight = Boolean(
         ex.equip === "Свой вес" || 
@@ -189,32 +195,47 @@ function startNewWorkout(routineData) {
         ))
       );
       const initialSets = [];
-      const count = ex.setsCount || (ex.sets ? ex.sets.length : 3);
+      const count = (ex.sets && Array.isArray(ex.sets)) ? ex.sets.length : (ex.setsCount || 3);
 
       for (let i = 0; i < count; i++) {
         const prevSet = lastSets && lastSets[i] ? lastSets[i] : (lastSets && lastSets[0] ? lastSets[0] : null);
+        const templateSet = (ex.sets && ex.sets[i]) ? ex.sets[i] : null;
 
         if (isCardio) {
-          const prevDist = prevSet && prevSet.distance !== undefined ? prevSet.distance : (ex.defaultDistance || 0.4);
-          const prevTime = prevSet && prevSet.time ? prevSet.time : (ex.defaultPace || "04:20");
+          const isTimeMode = ex.cardioMode === "time";
+          const prevDist = templateSet && templateSet.distance !== undefined 
+            ? templateSet.distance 
+            : (prevSet && prevSet.distance !== undefined ? prevSet.distance : (ex.defaultDistance || (ex.distUnit === "m" ? 400 : 0.4)));
+          const prevTime = templateSet && templateSet.time 
+            ? templateSet.time 
+            : (prevSet && prevSet.time ? prevSet.time : (isTimeMode ? `${ex.targetMinutes || 20} мин` : (ex.defaultPace || (ex.timeUnit === "sec" ? "90" : "04:20"))));
+          
           initialSets.push({
             setNumber: i + 1,
             distance: prevDist,
             time: prevTime,
+            minutes: templateSet && templateSet.minutes ? templateSet.minutes : (ex.targetMinutes || 20),
+            seconds: templateSet && templateSet.seconds ? templateSet.seconds : 60,
+            hours: templateSet && templateSet.hours ? templateSet.hours : 0.5,
+            incline: templateSet && templateSet.incline != null ? templateSet.incline : (ex.incline != null ? ex.incline : 1),
+            level: templateSet && templateSet.level != null ? templateSet.level : (ex.resistanceLevel != null ? ex.resistanceLevel : 5),
+            bikeLevel: templateSet && templateSet.bikeLevel != null ? templateSet.bikeLevel : (ex.bikeLevel != null ? ex.bikeLevel : 5),
             completed: false,
-            prevInfo: prevSet ? `${prevSet.distance} км (${prevSet.time})` : null
+            prevInfo: prevSet ? `${prevSet.distance ? prevSet.distance + ' ' + (ex.distUnit === 'm' ? 'м' : 'км') : ''}${prevSet.time ? ' (' + prevSet.time + ')' : ''}` : null
           });
         } else {
           let initialWeight = isBodyweight ? 0 : 20;
           const exPR = window.StorageModule.getExercisePR(ex.id, ex.name);
-          if (prevSet && prevSet.weight !== undefined) {
+          if (templateSet && templateSet.weight !== undefined) {
+            initialWeight = templateSet.weight;
+          } else if (prevSet && prevSet.weight !== undefined) {
             initialWeight = prevSet.weight;
           } else if (!isBodyweight && exPR && exPR.weight > 0) {
             initialWeight = exPR.weight;
           } else if (ex.defaultWeight !== undefined) {
             initialWeight = isBodyweight ? 0 : ex.defaultWeight;
           }
-          const initialReps = prevSet && prevSet.reps ? prevSet.reps : (parseInt(ex.targetReps) || 8);
+          const initialReps = templateSet && templateSet.reps ? templateSet.reps : (prevSet && prevSet.reps ? prevSet.reps : (parseInt(ex.targetReps) || 8));
           initialSets.push({
             setNumber: i + 1,
             weight: initialWeight,
