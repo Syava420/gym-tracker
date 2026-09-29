@@ -1,0 +1,2068 @@
+/* ЧИСТАЯ СТРОГАЯ ЧЕРНАЯ ТЕМА (AMOLED BLACK / MINIMALIST) */
+:root {
+  --bg-black: #000000;
+  --bg-surface: #0e0e0e;
+  --bg-card: #131313;
+  --bg-input: #181818;
+  --border: #222222;
+  --border-light: #2c2c2c;
+
+  --text-white: #ffffff;
+  --text-gray: #888888;
+  --text-dark-gray: #444444;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --bottom-nav-offset: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+body {
+  background-color: #050505;
+  color: var(--text-white);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.app-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-black);
+  position: relative;
+  overflow: hidden;
+}
+
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 14px calc(38px + var(--bottom-nav-offset, 8px) + 14px) 14px;
+}
+
+/* КАЛЕНДАРЬ НЕДЕЛИ */
+.calendar-section {
+  margin-bottom: 16px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.calendar-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--text-gray);
+}
+
+.calendar-today-label {
+  font-size: 11px;
+  color: var(--text-gray);
+}
+
+.calendar-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.cal-day-cell {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 2px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.cal-day-cell:active {
+  background: var(--bg-input);
+}
+
+.cal-day-cell.selected {
+  border-color: var(--text-white);
+  background: #181818;
+}
+
+.cal-day-cell.today .cal-num {
+  color: var(--text-white);
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+.cal-name {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-gray);
+}
+
+.cal-num {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-white);
+  font-family: var(--font-mono);
+}
+
+.cal-badge {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 2px;
+  border-radius: 3px;
+  width: 90%;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-badge.workout {
+  background: #252525;
+  color: #fff;
+  border: 1px solid #383838;
+}
+
+.cal-badge.rest {
+  background: transparent;
+  color: var(--text-dark-gray);
+}
+
+/* ---------------------------------------------------- */
+/* ПАПКИ ПРОГРАММ (СТРОГО В ОДИН РЯД СО СКРОЛЛОМ)       */
+/* ---------------------------------------------------- */
+.program-folders-section {
+  margin-bottom: 16px;
+}
+
+.folders-header, .routines-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.section-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--text-gray);
+}
+
+.btn-text-action {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.btn-text-action:hover {
+  text-decoration: underline;
+}
+
+/* Фикс: никогда не переносить на вторую строку, плавный горизонтальный скролл */
+.program-folder-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  flex-wrap: nowrap !important;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.folder-tab-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #141414;
+  border: 1px solid #282828;
+  color: #999999;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0 !important;
+  transition: all 0.15s ease;
+}
+
+.folder-tab-pill:hover {
+  background: #1c1c1c;
+  color: #e0e0e0;
+  border-color: #383838;
+}
+
+.folder-tab-pill.active {
+  background: #252525;
+  border-color: #555555;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ПЛАШКА АКТИВНОЙ ТРЕНИРОВКИ НА ГЛАВНОМ ЭКРАНЕ */
+/* ПЛАШКА АКТИВНОЙ ТРЕНИРОВКИ НА ГЛАВНОМ ЭКРАНЕ (AMOLED МОНОХРОМ) */
+.active-workout-banner {
+  background: #121212;
+  border: 1px solid #282828;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.awb-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.awb-pulse {
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  animation: pulseDot 1.6s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+.awb-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.awb-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: #888888;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.awb-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.awb-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-awb-resume {
+  background: #242424;
+  color: #ffffff;
+  border: 1px solid #3c3c3c;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-awb-resume:hover {
+  background: #303030;
+  border-color: #555555;
+}
+
+.btn-awb-cancel {
+  background: #181818;
+  color: #aaaaaa;
+  border: 1px solid #2c2c2c;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-awb-cancel:hover {
+  background: #241a1a;
+  color: #ef4444;
+  border-color: #4a2222;
+}
+
+.folders-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------------------------------------------------- */
+/* КАРТОЧКА ПРОГРАММЫ (БЕЗ НАЛОЖЕНИЙ, ЧИСТЫЙ ДИЗАЙН)     */
+/* ---------------------------------------------------- */
+.workout-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workout-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.workout-card:hover {
+  border-color: #3f3f3f;
+  background: #171717;
+  transform: translateY(-1px);
+}
+
+.workout-card:active {
+  transform: translateY(0);
+}
+
+.workout-card.highlighted {
+  border-color: #555555;
+  background: #191919;
+}
+
+.card-header-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-badges-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workout-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffffff;
+  background: #222222;
+  border: 1px solid #383838;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.workout-count {
+  font-size: 11px;
+  color: var(--text-gray);
+  font-weight: 600;
+}
+
+.card-tools-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-card-action {
+  background: #1c1c1c;
+  border: 1px solid #282828;
+  color: var(--text-gray);
+  font-size: 12px;
+  font-weight: 700;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-card-action:hover {
+  color: #fff;
+  border-color: #555;
+}
+
+.btn-del-prog {
+  color: #884444;
+}
+
+.btn-del-prog:hover {
+  color: #ff5555;
+  border-color: #884444;
+}
+
+.card-body-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workout-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-white);
+  line-height: 1.35;
+}
+
+.workout-sub {
+  font-size: 12px;
+  color: var(--text-gray);
+}
+
+.btn-start-full {
+  width: 100%;
+  background: #181818;
+  color: #f1f5f9;
+  border: 1px solid #2d2d2d;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-start-full:hover {
+  background: #242424;
+  border-color: #4a4a4a;
+  color: #ffffff;
+}
+
+.btn-start-full:active {
+  background: #121212;
+  transform: scale(0.99);
+}
+
+.empty-hint {
+  font-size: 13px;
+  color: var(--text-dark-gray);
+  text-align: center;
+  padding: 30px 10px;
+}
+
+/* ---------------------------------------------------- */
+/* ЭКРАН ТРЕНИРОВКИ                                     */
+/* ---------------------------------------------------- */
+.workout-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 14px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.workout-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-back-text {
+  background: transparent;
+  color: var(--text-gray);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.btn-cancel-mini {
+  background: #1c1414;
+  border: 1px solid #3f1d1d;
+  color: #f87171;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cancel-mini:hover {
+  background: #2d1818;
+  color: #ef4444;
+}
+
+.all-done-banner {
+  background: #181818;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #e0e0e0;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.type-switch-box {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.type-pill {
+  flex: 1;
+  background: #181818;
+  border: 1px solid #333333;
+  color: var(--text-gray);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.type-pill.active {
+  background: #242424;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.workout-header-center {
+  text-align: center;
+}
+
+.workout-header-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.workout-header-timer {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.btn-finish-minimal {
+  background: #222222;
+  color: #ffffff;
+  border: 1px solid #3c3c3c;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-finish-minimal:hover {
+  background: #2f2f2f;
+  border-color: #555555;
+  color: #ffffff;
+}
+
+/* КАРТОЧКА УПРАЖНЕНИЯ: ЕДИНЫЙ ТЕМНЫЙ ФОН #131313 */
+.ex-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.ex-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.ex-title-box {
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
+}
+
+/* Аккуратная ссылка на видео техники прямо в названии */
+.ex-title-clean-link {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-white);
+  text-decoration: none;
+  display: inline-block;
+  line-height: 1.35;
+}
+
+.ex-title-clean-link:hover {
+  text-decoration: underline;
+  color: #7dd3fc;
+}
+
+.ex-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.btn-card-tool {
+  background: #1c1c1c;
+  border: 1px solid #2e2e2e;
+  color: var(--text-gray);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-card-tool:hover {
+  color: #fff;
+  border-color: #555;
+}
+
+.btn-card-tool:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+  border-color: #222;
+}
+
+.btn-card-tool.btn-move-up,
+.btn-card-tool.btn-move-down {
+  padding: 4px 6px;
+  min-width: 20px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.btn-replace-ex {
+  color: #e2e8f0;
+}
+
+.btn-replace-ex:hover {
+  color: #38bdf8;
+  border-color: #38bdf8;
+}
+
+.btn-del-ex {
+  color: #884444;
+}
+
+.btn-del-ex:hover {
+  color: #ff5555;
+  border-color: #884444;
+}
+
+.ex-target-info {
+  font-size: 11px;
+  color: var(--text-gray);
+  margin-bottom: 6px;
+}
+
+.timed-badge {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.run-badge {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.workout-tag.run {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.set-index-badge.run {
+  color: #34d399;
+  background: #064e3b;
+}
+
+.history-volume-badge.run {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.35);
+  background: rgba(6, 78, 59, 0.2);
+}
+
+/* ПАНЕЛЬ УПРАВЛЕНИЯ КАРДИО (РЕЖИМЫ + УКЛОН / ТЯЖЕСТЬ) */
+.cardio-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 0 2px;
+  margin: 4px 0 6px 0;
+  height: 26px;
+  box-sizing: border-box;
+}
+
+.cardio-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: #141414;
+  border: 1px solid #282828;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.btn-cardio-mode {
+  background: transparent;
+  border: none;
+  color: #888888;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-cardio-mode.active {
+  background: #2a2a2a;
+  color: #ffffff;
+}
+
+.cardio-param-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cpb-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #888888;
+  text-transform: uppercase;
+}
+
+.cpb-stepper {
+  display: flex;
+  align-items: center;
+  background: #141414;
+  border: 1px solid #282828;
+  border-radius: 5px;
+  padding: 1px;
+}
+
+.btn-cqp-step {
+  background: transparent;
+  border: none;
+  color: #cccccc;
+  font-size: 13px;
+  font-weight: 800;
+  width: 20px;
+  height: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-cqp-step:active {
+  background: #242424;
+  color: #ffffff;
+}
+
+.cqp-val {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: #ffffff;
+  min-width: 34px;
+  text-align: center;
+  padding: 0 2px;
+}
+
+/* Кнопка запуска таймера кардио в строке отрезка */
+.btn-open-cardio-timer {
+  background: #064e3b;
+  border: 1px solid #059669;
+  color: #34d399;
+  font-size: 12px;
+  font-weight: 800;
+  width: 26px;
+  height: 28px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 2px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-open-cardio-timer:active {
+  background: #34d399;
+  color: #000000;
+}
+
+.cardio-time-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.cardio-time-cell .input-time {
+  width: 58px;
+  height: 28px;
+  background: #121212;
+  border: 1px solid #242424;
+  border-radius: 5px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  text-align: center;
+  outline: none;
+}
+
+.cardio-time-mode-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.cardio-time-mode-cell .input-minutes {
+  width: 38px;
+}
+
+.cardio-param-mode-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.cardio-param-mode-cell .input-cardio-set-param {
+  width: 38px;
+}
+
+/* МОДАЛЬНЫЙ ТАЙМЕР КАРДИО */
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-timer-minimize {
+  background: #1c1c1c;
+  border: 1px solid #333333;
+  color: #cccccc;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-timer-minimize:hover {
+  background: #252525;
+  color: #ffffff;
+}
+
+/* ПЛАВАЮЩИЙ МИНИ-БАР КАРДИО ПРИ СВОРАЧИВАНИИ */
+.cardio-floating-bar {
+  position: absolute;
+  bottom: calc(var(--bottom-nav-offset, 8px) + 52px);
+  left: 12px;
+  right: 12px;
+  background: #121212;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
+  z-index: 120;
+  animation: slideUpMini 0.2s ease-out;
+}
+
+@keyframes slideUpMini {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.cardio-floating-bar.hidden {
+  display: none !important;
+}
+
+.cfb-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  min-width: 0;
+  flex: 1;
+}
+
+.cfb-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+  flex-shrink: 0;
+  animation: pulseDot 1.5s infinite;
+}
+
+.cfb-time {
+  font-size: 15px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.cfb-title {
+  font-size: 11px;
+  color: #888888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cfb-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-cfb-expand {
+  background: #1c1c1c;
+  border: 1px solid #333333;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-cfb-finish {
+  background: #064e3b;
+  border: 1px solid #059669;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cardio-timer-meta-strip {
+  font-size: 11px;
+  font-weight: 600;
+  color: #34d399;
+  margin-top: 4px;
+}
+
+.circle-progress.cardio-circle {
+  stroke: #34d399;
+}
+
+.cardio-timer-btn-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.btn-cardio-pause {
+  flex: 1;
+  background: #1c1c1c;
+  border: 1px solid #333333;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cardio-pause:active, .btn-cardio-pause.paused {
+  background: #2e2612;
+  border-color: #eab308;
+  color: #fde047;
+}
+
+.btn-cardio-finish {
+  flex: 2;
+  background: #064e3b !important;
+  border-color: #059669 !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  padding: 12px 14px !important;
+}
+
+.btn-cardio-finish:active {
+  background: #047857 !important;
+}
+
+.ex-tip-box {
+  font-size: 11px;
+  color: #aaaaaa;
+  background: #181818;
+  border-left: 2px solid #555555;
+  padding: 6px 8px;
+  margin: 4px 0 10px 0;
+  line-height: 1.35;
+  border-radius: 0 4px 4px 0;
+  outline: none;
+  cursor: text;
+  user-select: text;
+}
+
+.ex-tip-box:focus {
+  background: #1f1f1f;
+  border-left-color: #ffffff;
+  color: #ffffff;
+}
+
+/* ЗАГОЛОВКИ СЕТОВ */
+.sets-header-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 2px 6px 2px;
+  font-size: 9px;
+  color: var(--text-dark-gray);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.sh-num { width: 26px; text-align: left; }
+.sh-prev { width: 50px; text-align: center; }
+.sh-weight { flex: 1; text-align: center; }
+.sh-reps { flex: 1; text-align: center; }
+.sh-check { width: 36px; text-align: center; }
+.sh-del { width: 28px; text-align: right; }
+
+/* СТРОКА СЕТА */
+.set-item-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 2px;
+  border-top: 1px solid #1c1c1c;
+}
+
+.set-item-row.done {
+  opacity: 0.45;
+}
+
+.set-num-cell {
+  width: 26px;
+}
+
+.set-index-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-gray);
+  background: #181818;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.set-prev-cell {
+  width: 50px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-dark-gray);
+  text-align: center;
+}
+
+.set-stepper-cell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.btn-step {
+  background: #1c1c1c;
+  border: 1px solid #2c2c2c;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  width: 24px;
+  height: 28px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.step-input {
+  width: 40px;
+  height: 28px;
+  background: #121212;
+  border: 1px solid #242424;
+  border-radius: 5px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  text-align: center;
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+  user-select: text;
+}
+
+/* Полностью убираем белые стрелочки/спиннеры у ВСЕХ number-инпутов в приложении */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+/* Кнопка запуска таймера виса прямо в сете */
+.btn-open-hang-timer {
+  background: #1e293b;
+  border: 1px solid #38bdf8;
+  color: #38bdf8;
+  font-size: 12px;
+  font-weight: 800;
+  width: 26px;
+  height: 28px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 2px;
+}
+
+.btn-open-hang-timer:active {
+  background: #38bdf8;
+  color: #000;
+}
+
+.set-check-cell {
+  width: 36px;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-complete-set {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #333333;
+  background: #161616;
+  color: #555555;
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-complete-set.active {
+  background: #2a2a2a !important;
+  border-color: #555555 !important;
+  color: #ffffff !important;
+}
+
+.set-del-cell {
+  width: 28px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-del-set-btn {
+  background: transparent;
+  border: none;
+  color: #553333;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.btn-del-set-btn:hover {
+  color: #ff5555;
+}
+
+.btn-add-set {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed #262626;
+  color: var(--text-gray);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px;
+  border-radius: 6px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.btn-add-set:hover {
+  border-color: #444;
+  color: #fff;
+}
+
+.add-exercise-box {
+  margin-top: 14px;
+  margin-bottom: 20px;
+}
+
+.btn-add-exercise {
+  width: 100%;
+  background: #161616;
+  border: 1px solid #2c2c2c;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-add-exercise:hover {
+  background: #202020;
+}
+
+/* ---------------------------------------------------- */
+/* КРУГЛОЙ ТАЙМЕР ДЛЯ СТАТИКИ (ВИС, ПЛАНКА)             */
+/* ---------------------------------------------------- */
+.static-timer-card {
+  align-items: center;
+  text-align: center;
+  padding-bottom: 24px;
+}
+
+.prep-countdown-box {
+  padding: 30px 10px;
+}
+
+.prep-hint-text {
+  font-size: 14px;
+  color: var(--text-gray);
+  margin-bottom: 14px;
+}
+
+.prep-num {
+  font-size: 72px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: #ffffff;
+  animation: pulsePrep 1s infinite alternate;
+}
+
+@keyframes pulsePrep {
+  from { transform: scale(0.9); opacity: 0.8; }
+  to { transform: scale(1.1); opacity: 1; }
+}
+
+.btn-skip-prep {
+  background: transparent;
+  border: none;
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.circular-timer-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 10px auto 20px auto;
+}
+
+.circular-timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #1c1c1c;
+  stroke-width: 10;
+}
+
+.circle-progress {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.2s linear;
+}
+
+.circle-inner-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-time-digits {
+  font-size: 38px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+}
+
+.circle-time-digits.target-hit {
+  color: #38bdf8;
+  animation: pulsePrep 0.5s 3;
+}
+
+.circle-target-label {
+  font-size: 12px;
+  color: var(--text-gray);
+  margin-top: 4px;
+}
+
+.btn-stop-hang {
+  width: 100%;
+  max-width: 280px;
+  background: #222222;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 14px;
+  border: 1px solid #3c3c3c;
+  border-radius: 12px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.15s ease;
+}
+
+.btn-stop-hang:hover {
+  background: #2c2c2c;
+  border-color: #555555;
+}
+
+.btn-stop-hang:active {
+  background: #181818;
+}
+
+/* ТАЙМЕР ОТДЫХА */
+.timer-panel {
+  position: absolute;
+  bottom: calc(var(--bottom-nav-offset, 8px) + 48px);
+  left: 10px;
+  right: 10px;
+  background: #121212;
+  border: 1px solid #333333;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+  z-index: 100;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.timer-panel.hidden {
+  transform: translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.timer-digits-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.timer-digits {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+}
+
+.timer-sub-text {
+  font-size: 10px;
+  color: var(--text-gray);
+  text-transform: uppercase;
+}
+
+.timer-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.timer-btn-act {
+  background: #222222;
+  border: 1px solid #3a3a3a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* НАВИГАЦИЯ: 4 вкладки */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #080808;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 50;
+  padding-top: 7px;
+  padding-bottom: var(--bottom-nav-offset, 8px);
+  padding-left: 4px;
+  padding-right: 4px;
+  box-sizing: border-box;
+}
+
+.nav-tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-dark-gray);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 4px 10px 6px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.nav-tab-btn.active {
+  color: var(--text-white);
+}
+
+.nav-tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: #ffffff;
+  border-radius: 2px;
+}
+
+/* МОДАЛЬНЫЕ ОКНА */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-overlay.visible {
+  display: flex;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  background: #111111;
+  border: 1px solid #2a2a2a;
+  border-radius: 20px 20px 0 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.modal-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-gray);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.search-box {
+  margin-bottom: 10px;
+}
+
+.search-input {
+  width: 100%;
+  background: #181818;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #ffffff;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.search-input:focus {
+  border-color: #ffffff;
+  background: #1e1e1e;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #202020;
+}
+
+.cat-pill {
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  color: var(--text-gray);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cat-pill.active {
+  background: #282828;
+  color: #ffffff;
+  border-color: #555555;
+}
+
+.catalog-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+}
+
+.catalog-item {
+  background: #161616;
+  border: 1px solid #242424;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.catalog-item:hover {
+  background: #1f1f1f;
+  border-color: #383838;
+}
+
+.catalog-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.catalog-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.badge-cat {
+  font-size: 10px;
+  background: #252525;
+  color: #ddd;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.badge-equip {
+  font-size: 10px;
+  background: #1e2230;
+  color: #7dd3fc;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.badge-reps {
+  font-size: 10px;
+  color: var(--text-dark-gray);
+  padding: 1px 4px;
+}
+
+.empty-search-box {
+  text-align: center;
+  padding: 30px 10px;
+  color: var(--text-gray);
+  font-size: 13px;
+}
+
+.btn-select-ex {
+  background: #252525;
+  border: 1px solid #333;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+
+/* Формы */
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-gray);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  background: #181818;
+  border: 1px solid #282828;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+/* Единая аккуратная стрелочка выпадающего списка */
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #181818;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  border-color: #444444;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-primary-full {
+  width: 100%;
+  background: #222222;
+  border: 1px solid #3c3c3c;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.btn-primary-full:hover {
+  background: #2c2c2c;
+  border-color: #555555;
+}
+
+.btn-primary-sm {
+  background: #222222;
+  border: 1px solid #3c3c3c;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.btn-primary-sm:hover {
+  background: #2c2c2c;
+  border-color: #555555;
+}
+
+/* ЖУРНАЛ: ПОЛНЫЙ МЕСЯЧНЫЙ КАЛЕНДАРЬ */
+.history-cal-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.hist-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.hist-month-center-box {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.hist-month-title {
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hist-month-stats {
+  font-size: 11px;
+  color: var(--text-gray);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hist-month-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-month-today {
+  background: #1e1e1e;
+  border: 1px solid #333333;
+  color: #e0e0e0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 10px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-month-today:hover {
+  background: #2a2a2a;
+  border-color: #555555;
+  color: #ffffff;
+}
+
+.btn-month-nav {
+  background: #181818;
+  border: 1px solid #282828;
+  color: #fff;
+  font-size: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-month-nav:hover {
+  background: #242424;
+  border-color: #444444;
+}
+
+.hist-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dark-gray);
+}
+
+.hist-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.hist-cell {
+  aspect-ratio: 1;
+  background: #101010;
+  border: 1px solid #1c1c1c;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.hist-cell.empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+
+.hist-cell.today {
+  border-color: #555555;
+}
+
+.hist-cell.selected {
+  background: #222222;
+  border-color: #ffffff;
+}
+
+.hist-cell.has-workout {
+  background: #16181f;
+  border-color: #2e354a;
+}
+
+.hist-cell-num {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: #fff;
+}
+
+.hist-workout-dot {
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+.hist-selected-details {
+  background: #101010;
+  border: 1px solid #222222;
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 100px;
+}
+
+.hist-day-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-gray);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.hist-empty-day {
+  text-align: center;
+  color: var(--text-dark-gray);
+  padding: 16px 0;
+  font-size: 13px;
+}
+
+.hist-empty-date {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-gray);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.history-entry {
+  background: #161616;
+  border: 1px solid #262626;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.history-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #222;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.history-volume-badge {
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #fff;
+  background: #252525;
+  border: 1px solid #383838;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.history-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.history-meta {
+  font-size: 11px;
+  color: var(--text-gray);
+  font-family: var(--font-mono);
+  display: block;
+}
+
+.history-exercise-line {
+  font-size: 12px;
+  color: var(--text-gray);
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.history-exercise-line strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.backup-box {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.btn-backup {
+  background: #141414;
+  border: 1px solid #262626;
+  color: var(--text-gray);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-backup:hover {
+  color: #fff;
+  border-color: #444;
+}

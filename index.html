@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Тренировки">
+  <meta name="theme-color" content="#000000">
+  <title>HYPER-MASS</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/phone-frame.css">
+  <link rel="stylesheet" href="./styles/views.css">
+</head>
+<body>
+
+  <!-- Обертка устройства: строгий черный эмулятор -->
+  <div class="device-wrapper">
+    
+    <div class="device-header-hint">
+      РЕЖИМ ТЕЛЕФОНА
+    </div>
+
+    <div class="phone-mockup">
+      <!-- Dynamic Island -->
+      <div class="dynamic-island">
+        <div class="island-camera"></div>
+        <div class="island-speaker"></div>
+      </div>
+
+      <!-- Внутренний экран -->
+      <div class="app-container" id="app-container">
+        
+        <!-- Сменяемый контент экранов -->
+        <main class="app-content" id="app-content">
+          <!-- Рендерится через модули -->
+        </main>
+
+        <!-- Плавающий строгий таймер отдыха -->
+        <div class="timer-panel hidden" id="rest-timer-panel">
+          <div class="timer-digits-box">
+            <span class="timer-sub-text">Отдых</span>
+            <span class="timer-digits" id="timer-digits">02:00</span>
+          </div>
+          <div class="timer-btns">
+            <button type="button" class="timer-btn-act" id="timer-add-btn">+30С</button>
+            <button type="button" class="timer-btn-act" id="timer-skip-btn">СТОП</button>
+          </div>
+        </div>
+
+        <!-- Плавающий мини-бар кардио при сворачивании таймера -->
+        <div class="cardio-floating-bar hidden" id="cardio-floating-bar">
+          <div class="cfb-left" id="cfb-expand-click">
+            <span class="cfb-pulse"></span>
+            <span class="cfb-time" id="cfb-time-digits">00:00</span>
+            <span class="cfb-title" id="cfb-title-digits">Кардио</span>
+          </div>
+          <div class="cfb-actions">
+            <button type="button" class="btn-cfb-expand" id="cfb-expand-btn">Развернуть</button>
+            <button type="button" class="btn-cfb-finish" id="cfb-finish-btn">Готово</button>
+          </div>
+        </div>
+
+        <!-- Нижняя навигация: 4 вкладки -->
+        <nav class="bottom-nav">
+          <button type="button" class="nav-tab-btn active" id="btn-home">Тренировки</button>
+          <button type="button" class="nav-tab-btn" id="btn-records">Рекорды</button>
+          <button type="button" class="nav-tab-btn" id="btn-history">Журнал</button>
+          <button type="button" class="nav-tab-btn" id="btn-settings">Настройки</button>
+        </nav>
+
+      </div>
+
+      <!-- Полоска Home Bar -->
+      <div class="home-indicator"></div>
+    </div>
+
+  </div>
+
+  <!-- Модули приложения в порядке загрузки -->
+  <script src="./js/workouts-data.js"></script>
+  <script src="./js/calendar.js"></script>
+  <script src="./js/storage.js"></script>
+  <script src="./js/timer.js"></script>
+  <script src="./js/stopwatch-modal.js"></script>
+  <script src="./js/modals.js"></script>
+  <script src="./js/manual-workout-modal.js"></script>
+  <script src="./js/export-helper.js"></script>
+  <script src="./js/settings-view.js"></script>
+  <script src="./js/exercises-view.js"></script>
+  <script src="./js/home-view.js"></script>
+  <script src="./js/cardio-helper.js"></script>
+  <script src="./js/workout-view.js"></script>
+  <script src="./js/history-view.js"></script>
+  <script src="./js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

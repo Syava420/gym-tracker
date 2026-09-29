@@ -1,0 +1,135 @@
+/* СТИЛИ ЭМУЛЯТОРА ДЛЯ МОНИТОРА ПК */
+
+.device-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  background: #050505;
+  padding: 10px;
+}
+
+.device-header-hint {
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: #555555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+/* Корпус смартфона */
+.phone-mockup {
+  position: relative;
+  width: 380px;
+  height: 810px;
+  background: #000000;
+  border-radius: 44px;
+  box-shadow: 
+    0 0 0 8px #181818,
+    0 0 0 10px #242424,
+    0 30px 80px rgba(0, 0, 0, 0.95);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dynamic Island */
+.dynamic-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 95px;
+  height: 22px;
+  background: #000000;
+  border-radius: 20px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border: 1px solid #1a1a1a;
+}
+
+.island-camera {
+  width: 8px;
+  height: 8px;
+  background: #0d0d0d;
+  border-radius: 50%;
+  border: 1px solid #1a1a1a;
+}
+
+.island-speaker {
+  width: 36px;
+  height: 3px;
+  background: #0d0d0d;
+  border-radius: 2px;
+}
+
+.home-indicator {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: #333333;
+  border-radius: 10px;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.phone-mockup .app-container {
+  padding-top: 36px;
+}
+
+/* АДАПТАЦИЯ ДЛЯ НАСТОЯЩЕГО ТЕЛЕФОНА */
+@media (max-width: 600px) {
+  body {
+    background-color: #000000;
+  }
+
+  .device-wrapper {
+    padding: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #000000;
+  }
+
+  .device-header-hint {
+    display: none;
+  }
+
+  .phone-mockup {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .dynamic-island {
+    display: none;
+  }
+
+  .home-indicator {
+    display: none;
+  }
+
+  .phone-mockup .app-container {
+    padding-top: env(safe-area-inset-top, 0px);
+    height: 100%;
+  }
+
+  .bottom-nav {
+    padding-bottom: calc(var(--bottom-nav-offset, 8px) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .nav-tab-btn.active::after {
+    bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
