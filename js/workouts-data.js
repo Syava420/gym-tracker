@@ -100,6 +100,8 @@ window.EXERCISE_CATALOG = [
   { id: "plank", name: "Классическая планка на локтях", category: "Пресс", equip: "Свой вес", defaultWeight: 0, targetReps: "45-60 сек", restSeconds: 60, tip: "Пресс и ягодицы зажаты, поясница не провисает" },
   { id: "ab_wheel", name: "Прокатка с гимнастическим роликом", category: "Пресс", equip: "Свой вес", defaultWeight: 0, targetReps: "8-12", restSeconds: 90, tip: "Округлая спина, мощная нагрузка на весь кор" },
   { id: "hang_decompression", name: "Вис на турнике (Декомпрессия и хват)", category: "Пресс", equip: "Свой вес", defaultWeight: 0, targetReps: "35-45 сек", restSeconds: 60, tip: "Полное расслабление спины, растяжение позвоночника" },
+  { id: "dead_bug", name: "Мертвый жук (Dead Bug)", category: "Пресс", equip: "Свой вес", defaultWeight: 0, targetReps: "12 на сторону", restSeconds: 60, tip: "Поясница прижата к полу, плавное движение разноименных руки и ноги" },
+  { id: "hyperextension_glutes", name: "Гиперэкстензия на ягодицы (упор ниже таза)", category: "Ноги", equip: "Свой вес", defaultWeight: 0, targetReps: "12-15", restSeconds: 90, tip: "Подушка строго ниже таза, акцент на ягодицы и бицепс бедра" },
 
   // ==================== БЕГ И КАРДИО ====================
   { id: "run_easy", name: "Кросс на объем (легкий бег)", category: "Бег", equip: "Дорожка / Улица", defaultDistance: 3.0, defaultPace: "6:00-6:20", targetReps: "3.0 км", restSeconds: 0, isCardio: true, tip: "Дыхание ровное, темп разговорный, пульс до 145 уд/мин" },
@@ -139,5 +141,308 @@ window.EXERCISE_CATALOG = [
 // Категории для фильтрации "по папкам"
 window.EXERCISE_CATEGORIES = ["Все", "Грудь", "Спина", "Ноги", "Плечи", "Руки", "Пресс", "Бег", "Эллипс", "Вело", "Кардио"];
 
-// Шаблоны тренировок: пустой список для чистого старта с нуля
-window.DEFAULT_WORKOUTS = [];
+// Шаблоны тренировок
+window.DEFAULT_WORKOUTS = [
+  {
+    id: "routine_fitness_d1",
+    title: "День 1: Задняя цепь + Верх",
+    subtitle: "Низ (задняя цепь), спина, грудь, бицепс, пресс",
+    tag: "Д1",
+    folder: "Фитнес",
+    exercises: [
+      {
+        id: "ex_d1_1",
+        name: "Румынская тяга (штанга)",
+        category: "Ноги",
+        equip: "Штанга",
+        defaultWeight: 20,
+        targetReps: "8-10",
+        restSeconds: 120,
+        tip: "Темп 3-1-1-0 (3 сек опускание, 1 сек пауза внизу, 1 сек подъем). Отвод таза назад, гриф скользит у ног, спина ровная.",
+        sets: [
+          { setNumber: 1, weight: 20, reps: 10, completed: false },
+          { setNumber: 2, weight: 20, reps: 10, completed: false },
+          { setNumber: 3, weight: 20, reps: 8, completed: false },
+          { setNumber: 4, weight: 20, reps: 8, completed: false }
+        ]
+      },
+      {
+        id: "ex_d1_2",
+        name: "Сгибания ног сидя (тренажер)",
+        category: "Ноги",
+        equip: "Тренажер",
+        defaultWeight: 15,
+        targetReps: "12-15",
+        restSeconds: 90,
+        tip: "Темп 2-0-1-1 (2 сек разгибание, 1 сек сгибание, 1 сек пиковое сжатие). Таз плотно прижат к креслу.",
+        sets: [
+          { setNumber: 1, weight: 15, reps: 15, completed: false },
+          { setNumber: 2, weight: 15, reps: 12, completed: false },
+          { setNumber: 3, weight: 15, reps: 12, completed: false }
+        ]
+      },
+      {
+        id: "ex_d1_3",
+        name: "Тяга верхнего блока к груди",
+        category: "Спина",
+        equip: "Блок",
+        defaultWeight: 20,
+        targetReps: "10-12",
+        restSeconds: 90,
+        tip: "Темп 2-0-1-2 (2 сек подъем, 1 сек тяга, 2 сек фиксация лопаток). Тяга к верхней части груди, локти вниз.",
+        sets: [
+          { setNumber: 1, weight: 20, reps: 12, completed: false },
+          { setNumber: 2, weight: 20, reps: 10, completed: false },
+          { setNumber: 3, weight: 20, reps: 10, completed: false }
+        ]
+      },
+      {
+        id: "ex_d1_4",
+        name: "Жим гантелей лежа",
+        category: "Грудь",
+        equip: "Гантели",
+        defaultWeight: 6,
+        targetReps: "10-12",
+        restSeconds: 90,
+        tip: "Темп 2-0-1-0 (2 сек опускание, 1 сек подъем). Локти под углом 45-60° к корпусу, мягкое растяжение.",
+        sets: [
+          { setNumber: 1, weight: 6, reps: 12, completed: false },
+          { setNumber: 2, weight: 6, reps: 10, completed: false },
+          { setNumber: 3, weight: 6, reps: 10, completed: false }
+        ]
+      },
+      {
+        id: "ex_d1_5",
+        name: "Сгибания рук с гантелями (молоток)",
+        category: "Руки",
+        equip: "Гантели",
+        defaultWeight: 5,
+        targetReps: "12-15",
+        restSeconds: 90,
+        tip: "Темп 2-0-1-1 (хват нейтральный, ладони друг к другу). Локти прижаты к корпусу, фиксация вверху на 1 сек.",
+        sets: [
+          { setNumber: 1, weight: 5, reps: 15, completed: false },
+          { setNumber: 2, weight: 5, reps: 12, completed: false },
+          { setNumber: 3, weight: 5, reps: 12, completed: false }
+        ]
+      },
+      {
+        id: "ex_d1_6",
+        name: "Мертвый жук",
+        category: "Пресс",
+        equip: "Свой вес",
+        defaultWeight: 0,
+        targetReps: "12 на сторону",
+        restSeconds: 60,
+        tip: "Темп 2-0-2-0 (2 сек опускание, 2 сек подъем). Поясница намертво прижата к полу, живот втянут, движение плавное.",
+        sets: [
+          { setNumber: 1, weight: 0, reps: 12, completed: false },
+          { setNumber: 2, weight: 0, reps: 12, completed: false },
+          { setNumber: 3, weight: 0, reps: 12, completed: false }
+        ]
+      }
+    ]
+  },
+  {
+    id: "routine_fitness_d2",
+    title: "День 2: Квадрицепс + Плечи",
+    subtitle: "Квадрицепс, плечи (ширина), спина, трицепс",
+    tag: "Д2",
+    folder: "Фитнес",
+    exercises: [
+      {
+        id: "ex_d2_1",
+        name: "Жим ногами",
+        category: "Ноги",
+        equip: "Тренажер",
+        defaultWeight: 40,
+        targetReps: "10-12",
+        restSeconds: 120,
+        tip: "Темп 3-1-1-0 (3 сек плавное опускание, 1 сек пауза внизу). Колени не блокировать вверху, таз плотно прижат.",
+        sets: [
+          { setNumber: 1, weight: 40, reps: 12, completed: false },
+          { setNumber: 2, weight: 40, reps: 12, completed: false },
+          { setNumber: 3, weight: 40, reps: 10, completed: false },
+          { setNumber: 4, weight: 40, reps: 10, completed: false }
+        ]
+      },
+      {
+        id: "ex_d2_2",
+        name: "Разгибания ног в тренажере",
+        category: "Ноги",
+        equip: "Тренажер",
+        defaultWeight: 15,
+        targetReps: "12-15",
+        restSeconds: 90,
+        tip: "Темп 2-0-1-1, RPE 9 (тяжело, запас 1 повтор). Пауза 1 сек в точке пикового сокращения квадрицепса.",
+        sets: [
+          { setNumber: 1, weight: 15, reps: 15, completed: false },
+          { setNumber: 2, weight: 15, reps: 12, completed: false },
+          { setNumber: 3, weight: 15, reps: 12, completed: false }
+        ]
+      },
+      {
+        id: "ex_d2_3",
+        name: "Тяга гантели к поясу с упором",
+        category: "Спина",
+        equip: "Гантели",
+        defaultWeight: 8,
+        targetReps: "10-12",
+        restSeconds: 90,
+        tip: "Темп 2-0-1-2 (2 сек фиксация вверху). Тяга локтем к карману без разворота корпуса, упор рукой и коленом о скамью.",
+        sets: [
+          { setNumber: 1, weight: 8, reps: 12, completed: false },
+          { setNumber: 2, weight: 8, reps: 10, completed: false },
+          { setNumber: 3, weight: 8, reps: 10, completed: false }
+        ]
+      },
+      {
+        id: "ex_d2_4",
+        name: "Махи гантелями в стороны",
+        category: "Плечи",
+        equip: "Гантели",
+        defaultWeight: 3,
+        targetReps: "12-15",
+        restSeconds: 60,
+        tip: "Темп 2-0-1-1. Подъем через стороны, мизинцы чуть выше больших пальцев, плечи не задирать к ушам.",
+        sets: [
+          { setNumber: 1, weight: 3, reps: 15, completed: false },
+          { setNumber: 2, weight: 3, reps: 15, completed: false },
+          { setNumber: 3, weight: 3, reps: 12, completed: false },
+          { setNumber: 4, weight: 3, reps: 12, completed: false }
+        ]
+      },
+      {
+        id: "ex_d2_5",
+        name: "Жим блока на трицепс (канат)",
+        category: "Руки",
+        equip: "Блок",
+        defaultWeight: 10,
+        targetReps: "12-15",
+        restSeconds: 60,
+        tip: "Темп 2-0-1-1. Разведение канатов в стороны в нижней точке, локти зафиксированы у корпуса.",
+        sets: [
+          { setNumber: 1, weight: 10, reps: 15, completed: false },
+          { setNumber: 2, weight: 10, reps: 12, completed: false },
+          { setNumber: 3, weight: 10, reps: 12, completed: false }
+        ]
+      }
+    ]
+  },
+  {
+    id: "routine_fitness_d3",
+    title: "День 3: Ягодицы (акцент) + Верх",
+    subtitle: "Ягодицы, спина, плечи, трицепс, икры, пресс",
+    tag: "Д3",
+    folder: "Фитнес",
+    exercises: [
+      {
+        id: "ex_d3_1",
+        name: "Болгарские сплит-приседания",
+        category: "Ноги",
+        equip: "Гантели",
+        defaultWeight: 6,
+        targetReps: "10-12 на ногу",
+        restSeconds: 120,
+        tip: "Темп 3-1-1-0 (3 сек опускание, 1 сек пауза внизу). Небольшой наклон корпуса вперед для акцента на ягодицу.",
+        sets: [
+          { setNumber: 1, weight: 6, reps: 12, completed: false },
+          { setNumber: 2, weight: 6, reps: 10, completed: false },
+          { setNumber: 3, weight: 6, reps: 10, completed: false }
+        ]
+      },
+      {
+        id: "ex_d3_2",
+        name: "Гиперэкстензия на ягодицы (упор ниже таза)",
+        category: "Ноги",
+        equip: "Свой вес",
+        defaultWeight: 0,
+        targetReps: "12-15",
+        restSeconds: 90,
+        tip: "Темп 2-0-1-2. Подушка тренажера строго ниже тазовых костей, спина чуть скруглена, сжатие ягодиц вверху на 2 сек.",
+        sets: [
+          { setNumber: 1, weight: 0, reps: 15, completed: false },
+          { setNumber: 2, weight: 0, reps: 15, completed: false },
+          { setNumber: 3, weight: 0, reps: 12, completed: false },
+          { setNumber: 4, weight: 0, reps: 12, completed: false }
+        ]
+      },
+      {
+        id: "ex_d3_3",
+        name: "Горизонтальная тяга нижнего блока",
+        category: "Спина",
+        equip: "Блок",
+        defaultWeight: 20,
+        targetReps: "10-12",
+        restSeconds: 90,
+        tip: "Темп 2-1-1-2 (1 сек пауза в растяжке, 2 сек фиксация лопаток). Тяга к низу живота, грудь навстречу блоку.",
+        sets: [
+          { setNumber: 1, weight: 20, reps: 12, completed: false },
+          { setNumber: 2, weight: 20, reps: 10, completed: false },
+          { setNumber: 3, weight: 20, reps: 10, completed: false }
+        ]
+      },
+      {
+        id: "ex_d3_4",
+        name: "Лицевая тяга (Face Pulls)",
+        category: "Плечи",
+        equip: "Блок",
+        defaultWeight: 10,
+        targetReps: "12-15",
+        restSeconds: 90,
+        tip: "Темп 2-0-1-2. Тяга каната на уровне глаз/лба, разведение кистей назад, акцент на заднюю дельту.",
+        sets: [
+          { setNumber: 1, weight: 10, reps: 15, completed: false },
+          { setNumber: 2, weight: 10, reps: 12, completed: false },
+          { setNumber: 3, weight: 10, reps: 12, completed: false }
+        ]
+      },
+      {
+        id: "ex_d3_5",
+        name: "Разгибание гантели из-за головы",
+        category: "Руки",
+        equip: "Гантели",
+        defaultWeight: 6,
+        targetReps: "12-15",
+        restSeconds: 90,
+        tip: "Темп 3-0-1-0 (3 сек глубокое плавное опускание). Локти вверх, растяжка длинной головки трицепса.",
+        sets: [
+          { setNumber: 1, weight: 6, reps: 15, completed: false },
+          { setNumber: 2, weight: 6, reps: 12, completed: false },
+          { setNumber: 3, weight: 6, reps: 12, completed: false }
+        ]
+      },
+      {
+        id: "ex_d3_6",
+        name: "Подъемы на носки стоя",
+        category: "Ноги",
+        equip: "Тренажер",
+        defaultWeight: 25,
+        targetReps: "15-20",
+        restSeconds: 60,
+        tip: "Темп 2-1-1-2, RPE 9. Пауза 1 сек в нижней растяжке и 2 сек в пиковом подъеме на носки.",
+        sets: [
+          { setNumber: 1, weight: 25, reps: 20, completed: false },
+          { setNumber: 2, weight: 25, reps: 18, completed: false },
+          { setNumber: 3, weight: 25, reps: 15, completed: false },
+          { setNumber: 4, weight: 25, reps: 15, completed: false }
+        ]
+      },
+      {
+        id: "ex_d3_7",
+        name: "Мертвый жук",
+        category: "Пресс",
+        equip: "Свой вес",
+        defaultWeight: 0,
+        targetReps: "12 на сторону",
+        restSeconds: 60,
+        tip: "Темп 2-0-2-0. Контроль кора, поясница не отрывается от пола.",
+        sets: [
+          { setNumber: 1, weight: 0, reps: 12, completed: false },
+          { setNumber: 2, weight: 0, reps: 12, completed: false },
+          { setNumber: 3, weight: 0, reps: 12, completed: false }
+        ]
+      }
+    ]
+  }
+];

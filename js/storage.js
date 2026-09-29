@@ -40,10 +40,17 @@ function getProgramFolders() {
     const raw = localStorage.getItem(STORAGE_KEYS.FOLDERS);
     let folders = raw ? JSON.parse(raw) : null;
     if (!folders || !Array.isArray(folders)) {
-      folders = ["Все"];
+      folders = ["Все", "Фитнес", "Кардио"];
       localStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(folders));
+      localStorage.setItem("gym_folders_fitness_added", "true");
     } else {
       if (!folders.includes("Все")) folders.unshift("Все");
+      if (!localStorage.getItem("gym_folders_fitness_added")) {
+        if (!folders.includes("Фитнес")) folders.push("Фитнес");
+        if (!folders.includes("Кардио")) folders.push("Кардио");
+        localStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(folders));
+        localStorage.setItem("gym_folders_fitness_added", "true");
+      }
     }
     
     const settings = getAppSettings();
@@ -98,9 +105,9 @@ function renameProgramFolder(oldName, newName) {
 }
 
 /**
- * Удалить папку и переместить тренировки в 'Все'
+ * Удалить папку (и опционально удалить тренировки внутри неё)
  */
-function deleteProgramFolder(folderName) {
+function deleteProgramFolder(folderName, deleteWorkouts = false) {
   if (!folderName || folderName === "Все") return false;
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.FOLDERS);
@@ -117,14 +124,20 @@ function deleteProgramFolder(folderName) {
 
     const routines = getWorkoutRoutines();
     let updated = false;
-    routines.forEach((r) => {
-      if (r.folder === folderName) {
-        r.folder = "Все";
-        updated = true;
-      }
-    });
+    let nextRoutines = routines;
+    if (deleteWorkouts) {
+      nextRoutines = routines.filter((r) => r.folder !== folderName);
+      updated = true;
+    } else {
+      nextRoutines.forEach((r) => {
+        if (r.folder === folderName) {
+          r.folder = "Все";
+          updated = true;
+        }
+      });
+    }
     if (updated) {
-      saveWorkoutRoutines(routines);
+      saveWorkoutRoutines(nextRoutines);
     }
     return true;
   } catch (e) {
@@ -168,9 +181,22 @@ function getWorkoutRoutines() {
     const raw = localStorage.getItem(STORAGE_KEYS.ROUTINES);
     let routines = raw ? JSON.parse(raw) : null;
     if (!routines || !Array.isArray(routines)) {
-      routines = [];
+      routines = Array.isArray(window.DEFAULT_WORKOUTS) ? JSON.parse(JSON.stringify(window.DEFAULT_WORKOUTS)) : [];
       saveWorkoutRoutines(routines);
+      localStorage.setItem("gym_fitness_program_loaded", "true");
       return routines;
+    }
+    // Разовая подгрузка программы тренировок при обновлении
+    if (!localStorage.getItem("gym_fitness_program_loaded")) {
+      if (Array.isArray(window.DEFAULT_WORKOUTS)) {
+        const existingIds = new Set(routines.map((r) => r.id));
+        const newRoutines = window.DEFAULT_WORKOUTS.filter((r) => !existingIds.has(r.id));
+        if (newRoutines.length > 0) {
+          routines = routines.concat(JSON.parse(JSON.stringify(newRoutines)));
+          saveWorkoutRoutines(routines);
+        }
+      }
+      localStorage.setItem("gym_fitness_program_loaded", "true");
     }
     return routines;
   } catch (e) {

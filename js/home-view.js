@@ -86,10 +86,10 @@ function openFolderActionSheet(folderName, onDone) {
 
   sheet.querySelector("#fas-delete").addEventListener("click", () => {
     close();
-    if (confirm(`Удалить папку «${folderName}»?\nВсе программы из нее сохранятся во вкладке «Все».`)) {
-      window.StorageModule.deleteProgramFolder(folderName);
-      if (onDone) onDone("Все");
-    }
+    if (!confirm(`Удалить папку «${folderName}»?`)) return;
+    const deleteWorkouts = confirm(`Удалить также сами тренировки внутри папки «${folderName}»?\n\n• ОК — удалить папку и все её тренировки\n• Отмена — удалить папку, но тренировки оставить во вкладке «Все»`);
+    window.StorageModule.deleteProgramFolder(folderName, deleteWorkouts);
+    if (onDone) onDone("Все");
   });
 }
 

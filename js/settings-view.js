@@ -118,10 +118,10 @@ function openFolderManagerModal(onUpdate) {
         }
       });
       item.querySelector(".btn-sf-delete").addEventListener("click", () => {
-        if (confirm(`Удалить папку «${folderName}»?\nВсе программы из нее останутся во вкладке «Все».`)) {
-          window.StorageModule.deleteProgramFolder(folderName);
-          renderContent();
-        }
+        if (!confirm(`Удалить папку «${folderName}»?`)) return;
+        const deleteWorkouts = confirm(`Удалить также сами тренировки внутри папки «${folderName}»?\n\n• ОК — удалить папку и все её тренировки\n• Отмена — удалить папку, но тренировки оставить во вкладке «Все»`);
+        window.StorageModule.deleteProgramFolder(folderName, deleteWorkouts);
+        renderContent();
       });
     });
   };
